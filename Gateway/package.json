@@ -1,0 +1,19 @@
+{
+  "name": "gia-api-gateway",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20.6"
+  },
+  "scripts": {
+    "start": "node --env-file=../.env src/server.mjs",
+    "start:clean": "node src/server.mjs",
+    "test": "node --test",
+    "test:live": "node --env-file=../.env scripts/live-smoke.mjs",
+    "check": "node scripts/check-syntax.mjs"
+  },
+  "dependencies": {
+    "ffmpeg-static": "^5.2.0"
+  }
+}

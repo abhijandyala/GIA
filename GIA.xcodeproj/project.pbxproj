@@ -1,0 +1,977 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		000000000000000000000202 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000102 /* AppState.swift */; };
+		000000000000000000000204 /* GIAApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000104 /* GIAApp.swift */; };
+		000000000000000000000205 /* RootContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000105 /* RootContainer.swift */; };
+		000000000000000000000208 /* AppTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000108 /* AppTab.swift */; };
+		00000000000000000000020B /* LocationContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000010B /* LocationContext.swift */; };
+		000000000000000000000211 /* GIAColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000111 /* GIAColor.swift */; };
+		000000000000000000000212 /* GIAMotion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000112 /* GIAMotion.swift */; };
+		000000000000000000000213 /* GIATypography.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000113 /* GIATypography.swift */; };
+		000000000000000000000218 /* GroupScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000118 /* GroupScreen.swift */; };
+		00000000000000000000021B /* MapViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000011B /* MapViewModel.swift */; };
+		00000000000000000000021E /* MapScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000011E /* MapScreen.swift */; };
+		000000000000000000000221 /* PlanScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000121 /* PlanScreen.swift */; };
+		000000000000000000000224 /* MapStage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000124 /* MapStage.swift */; };
+		000000000000000000000225 /* GIASpacing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000125 /* GIASpacing.swift */; };
+		000000000000000000000226 /* EarthSceneController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000126 /* EarthSceneController.swift */; };
+		000000000000000000000227 /* EarthSceneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000127 /* EarthSceneView.swift */; };
+		000000000000000000000228 /* LocationContextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000128 /* LocationContextView.swift */; };
+		000000000000000000000229 /* HamburgerButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000129 /* HamburgerButton.swift */; };
+		00000000000000000000022A /* MapTopChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000012A /* MapTopChrome.swift */; };
+		00000000000000000000022B /* EmptyMenuOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000012B /* EmptyMenuOverlay.swift */; };
+		00000000000000000000022C /* BottomNavigationBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000012C /* BottomNavigationBar.swift */; };
+		00000000000000000000022D /* ApplicationActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000012D /* ApplicationActivity.swift */; };
+		00000000000000000000022E /* EarthRenderingConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000012E /* EarthRenderingConfiguration.swift */; };
+		00000000000000000000022F /* GIAIdleMark.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000012F /* GIAIdleMark.swift */; };
+		000000000000000000000230 /* GIAVoiceVisualState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000130 /* GIAVoiceVisualState.swift */; };
+		000000000000000000000231 /* EarthVoiceShader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000131 /* EarthVoiceShader.swift */; };
+		000000000000000000000233 /* GIAActiveVoiceDisc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000133 /* GIAActiveVoiceDisc.swift */; };
+		000000000000000000000235 /* ProceduralStarfieldView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000135 /* ProceduralStarfieldView.swift */; };
+		000000000000000000000237 /* TravelValueTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000137 /* TravelValueTypes.swift */; };
+		000000000000000000000238 /* Traveler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000138 /* Traveler.swift */; };
+		000000000000000000000239 /* TripRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000139 /* TripRequest.swift */; };
+		00000000000000000000023A /* TravelOffers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000013A /* TravelOffers.swift */; };
+		00000000000000000000023B /* RouteAndWeather.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000013B /* RouteAndWeather.swift */; };
+		00000000000000000000023C /* Itinerary.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000013C /* Itinerary.swift */; };
+		00000000000000000000023D /* CollaborationAndBooking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000013D /* CollaborationAndBooking.swift */; };
+		00000000000000000000023E /* Trip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000013E /* Trip.swift */; };
+		00000000000000000000023F /* TripDomainValidation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000013F /* TripDomainValidation.swift */; };
+		000000000000000000000240 /* TripPlanningSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000140 /* TripPlanningSession.swift */; };
+		000000000000000000000241 /* VoiceSessionCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000141 /* VoiceSessionCoordinator.swift */; };
+		000000000000000000000242 /* VoiceRecognitionRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000142 /* VoiceRecognitionRules.swift */; };
+		000000000000000000000243 /* GIAPlanningIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000143 /* GIAPlanningIndicator.swift */; };
+		000000000000000000000244 /* PlanPresentationModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000144 /* PlanPresentationModels.swift */; };
+		000000000000000000000245 /* PlanSurfaceStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000145 /* PlanSurfaceStyle.swift */; };
+		000000000000000000000246 /* PlanHeaderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000146 /* PlanHeaderView.swift */; };
+		000000000000000000000247 /* PlanningModuleRail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000147 /* PlanningModuleRail.swift */; };
+		000000000000000000000248 /* PlanTimelineFoundation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000148 /* PlanTimelineFoundation.swift */; };
+		000000000000000000000249 /* TripRequestInterpreter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000149 /* TripRequestInterpreter.swift */; };
+		00000000000000000000024A /* TripRequestCorrectionSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000014A /* TripRequestCorrectionSheet.swift */; };
+		00000000000000000000024B /* TripPlanningProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000014B /* TripPlanningProgress.swift */; };
+		00000000000000000000024C /* PlanningProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000014C /* PlanningProgressView.swift */; };
+		00000000000000000000024D /* TravelServiceProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000014D /* TravelServiceProtocols.swift */; };
+		00000000000000000000024E /* GatewayContracts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000014E /* GatewayContracts.swift */; };
+		00000000000000000000024F /* GatewayTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000014F /* GatewayTransport.swift */; };
+		000000000000000000000250 /* GatewayResponseCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000150 /* GatewayResponseCache.swift */; };
+		000000000000000000000251 /* GIAGatewayClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000151 /* GIAGatewayClient.swift */; };
+		000000000000000000000252 /* GatewayTravelService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000152 /* GatewayTravelService.swift */; };
+		000000000000000000000253 /* TripPlanBlueprint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000153 /* TripPlanBlueprint.swift */; };
+		000000000000000000000254 /* FlightSearchCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000154 /* FlightSearchCoordinator.swift */; };
+		000000000000000000000255 /* HotelSearchCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000155 /* HotelSearchCoordinator.swift */; };
+		000000000000000000000256 /* PlaceSearchCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000156 /* PlaceSearchCoordinator.swift */; };
+		000000000000000000000257 /* TimedEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000157 /* TimedEvent.swift */; };
+		000000000000000000000258 /* EventSearchCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000158 /* EventSearchCoordinator.swift */; };
+		000000000000000000000259 /* RoutePlanningCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000159 /* RoutePlanningCoordinator.swift */; };
+		00000000000000000000025A /* WeatherPlanningAdvisory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000015A /* WeatherPlanningAdvisory.swift */; };
+		00000000000000000000025B /* WeatherSearchCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000015B /* WeatherSearchCoordinator.swift */; };
+		00000000000000000000025C /* TranslatedText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000015C /* TranslatedText.swift */; };
+		00000000000000000000025D /* FlightPresentationModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000015D /* FlightPresentationModels.swift */; };
+		00000000000000000000025E /* FlightComparisonSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000015E /* FlightComparisonSection.swift */; };
+		00000000000000000000025F /* PlanDebugFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000015F /* PlanDebugFixtures.swift */; };
+		000000000000000000000260 /* HotelPresentationModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000160 /* HotelPresentationModels.swift */; };
+		000000000000000000000261 /* HotelComparisonSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000161 /* HotelComparisonSection.swift */; };
+		000000000000000000000262 /* HotelDebugFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000162 /* HotelDebugFixtures.swift */; };
+		000000000000000000000263 /* ItineraryPresentationModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000163 /* ItineraryPresentationModels.swift */; };
+		000000000000000000000264 /* SpatialItineraryTimeline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000164 /* SpatialItineraryTimeline.swift */; };
+		000000000000000000000265 /* TimelineDebugFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000165 /* TimelineDebugFixtures.swift */; };
+		000000000000000000000266 /* BudgetConflict.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000166 /* BudgetConflict.swift */; };
+		000000000000000000000267 /* BudgetConflictEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000167 /* BudgetConflictEngine.swift */; };
+		000000000000000000000268 /* BudgetConflictDebugFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000168 /* BudgetConflictDebugFixtures.swift */; };
+		000000000000000000000269 /* BudgetConflictSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000169 /* BudgetConflictSection.swift */; };
+		00000000000000000000026A /* GIAResponseCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000016A /* GIAResponseCoordinator.swift */; };
+		00000000000000000000026B /* BookingConfirmationModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000016B /* BookingConfirmationModels.swift */; };
+		00000000000000000000026C /* BookingConfirmationSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000016C /* BookingConfirmationSheet.swift */; };
+		00000000000000000000026D /* GroupCollaboration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000016D /* GroupCollaboration.swift */; };
+		00000000000000000000026E /* GroupPresentationModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000016E /* GroupPresentationModels.swift */; };
+		00000000000000000000026F /* GroupDebugFixtures.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000016F /* GroupDebugFixtures.swift */; };
+		000000000000000000000270 /* VotingEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000170 /* VotingEngine.swift */; };
+		000000000000000000000271 /* DecisionPresentationModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000171 /* DecisionPresentationModels.swift */; };
+		000000000000000000000272 /* Communication.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000172 /* Communication.swift */; };
+		000000000000000000000273 /* CommunicationPresentationModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000173 /* CommunicationPresentationModels.swift */; };
+		000000000000000000000274 /* GroupChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000174 /* GroupChatView.swift */; };
+		000000000000000000000275 /* PersistenceSchema.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000175 /* PersistenceSchema.swift */; };
+		000000000000000000000276 /* TripPersistenceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000176 /* TripPersistenceController.swift */; };
+		000000000000000000000277 /* OfflineTripLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000177 /* OfflineTripLibraryView.swift */; };
+		000000000000000000000278 /* JudgeDemoTripFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000178 /* JudgeDemoTripFactory.swift */; };
+		000000000000000000000279 /* JudgeDemoController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000179 /* JudgeDemoController.swift */; };
+		00000000000000000000027A /* TripIntegrations.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000017A /* TripIntegrations.swift */; };
+		00000000000000000000027B /* TripReminderPlanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000017B /* TripReminderPlanner.swift */; };
+		00000000000000000000027C /* TripNotificationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000017C /* TripNotificationCoordinator.swift */; };
+		00000000000000000000027D /* TripCalendarCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000017D /* TripCalendarCoordinator.swift */; };
+		00000000000000000000027E /* TripIntegrationSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000017E /* TripIntegrationSection.swift */; };
+		00000000000000000000027F /* GIAQualityPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00000000000000000000017F /* GIAQualityPolicy.swift */; };
+		000000000000000000000280 /* GIAConversationResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000180 /* GIAConversationResponse.swift */; };
+		000000000000000000000286 /* GIAHumanReplyComposer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000186 /* GIAHumanReplyComposer.swift */; };
+		000000000000000000000281 /* TransientTripAssembler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000181 /* TransientTripAssembler.swift */; };
+		000000000000000000000282 /* TripPlanningOrchestrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000182 /* TripPlanningOrchestrator.swift */; };
+		000000000000000000000283 /* GIAConnectivityMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000183 /* GIAConnectivityMonitor.swift */; };
+		000000000000000000000284 /* SpeechActivityDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000184 /* SpeechActivityDetector.swift */; };
+		000000000000000000000285 /* SpeechEndpointRules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000185 /* SpeechEndpointRules.swift */; };
+		000000000000000000000287 /* GIATypedConversationViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000187 /* GIATypedConversationViews.swift */; };
+		0000000000000000000000B0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 0000000000000000000000AF /* Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		000000000000000000000102 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		000000000000000000000104 /* GIAApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIAApp.swift; sourceTree = "<group>"; };
+		000000000000000000000105 /* RootContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootContainer.swift; sourceTree = "<group>"; };
+		000000000000000000000108 /* AppTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTab.swift; sourceTree = "<group>"; };
+		00000000000000000000010B /* LocationContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationContext.swift; sourceTree = "<group>"; };
+		000000000000000000000111 /* GIAColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIAColor.swift; sourceTree = "<group>"; };
+		000000000000000000000112 /* GIAMotion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIAMotion.swift; sourceTree = "<group>"; };
+		000000000000000000000113 /* GIATypography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIATypography.swift; sourceTree = "<group>"; };
+		000000000000000000000118 /* GroupScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupScreen.swift; sourceTree = "<group>"; };
+		00000000000000000000011B /* MapViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapViewModel.swift; sourceTree = "<group>"; };
+		00000000000000000000011E /* MapScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapScreen.swift; sourceTree = "<group>"; };
+		000000000000000000000121 /* PlanScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanScreen.swift; sourceTree = "<group>"; };
+		000000000000000000000124 /* MapStage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapStage.swift; sourceTree = "<group>"; };
+		000000000000000000000125 /* GIASpacing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIASpacing.swift; sourceTree = "<group>"; };
+		000000000000000000000126 /* EarthSceneController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EarthSceneController.swift; sourceTree = "<group>"; };
+		000000000000000000000127 /* EarthSceneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EarthSceneView.swift; sourceTree = "<group>"; };
+		000000000000000000000128 /* LocationContextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationContextView.swift; sourceTree = "<group>"; };
+		000000000000000000000129 /* HamburgerButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HamburgerButton.swift; sourceTree = "<group>"; };
+		00000000000000000000012A /* MapTopChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapTopChrome.swift; sourceTree = "<group>"; };
+		00000000000000000000012B /* EmptyMenuOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyMenuOverlay.swift; sourceTree = "<group>"; };
+		00000000000000000000012C /* BottomNavigationBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BottomNavigationBar.swift; sourceTree = "<group>"; };
+		00000000000000000000012D /* ApplicationActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationActivity.swift; sourceTree = "<group>"; };
+		00000000000000000000012E /* EarthRenderingConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EarthRenderingConfiguration.swift; sourceTree = "<group>"; };
+		00000000000000000000012F /* GIAIdleMark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIAIdleMark.swift; sourceTree = "<group>"; };
+		000000000000000000000130 /* GIAVoiceVisualState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIAVoiceVisualState.swift; sourceTree = "<group>"; };
+		000000000000000000000131 /* EarthVoiceShader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EarthVoiceShader.swift; sourceTree = "<group>"; };
+		000000000000000000000133 /* GIAActiveVoiceDisc.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIAActiveVoiceDisc.swift; sourceTree = "<group>"; };
+		000000000000000000000135 /* ProceduralStarfieldView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProceduralStarfieldView.swift; sourceTree = "<group>"; };
+		000000000000000000000137 /* TravelValueTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TravelValueTypes.swift; sourceTree = "<group>"; };
+		000000000000000000000138 /* Traveler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Traveler.swift; sourceTree = "<group>"; };
+		000000000000000000000139 /* TripRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripRequest.swift; sourceTree = "<group>"; };
+		00000000000000000000013A /* TravelOffers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TravelOffers.swift; sourceTree = "<group>"; };
+		00000000000000000000013B /* RouteAndWeather.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteAndWeather.swift; sourceTree = "<group>"; };
+		00000000000000000000013C /* Itinerary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Itinerary.swift; sourceTree = "<group>"; };
+		00000000000000000000013D /* CollaborationAndBooking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollaborationAndBooking.swift; sourceTree = "<group>"; };
+		00000000000000000000013E /* Trip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Trip.swift; sourceTree = "<group>"; };
+		00000000000000000000013F /* TripDomainValidation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripDomainValidation.swift; sourceTree = "<group>"; };
+		000000000000000000000140 /* TripPlanningSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripPlanningSession.swift; sourceTree = "<group>"; };
+		000000000000000000000141 /* VoiceSessionCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceSessionCoordinator.swift; sourceTree = "<group>"; };
+		000000000000000000000142 /* VoiceRecognitionRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceRecognitionRules.swift; sourceTree = "<group>"; };
+		000000000000000000000143 /* GIAPlanningIndicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIAPlanningIndicator.swift; sourceTree = "<group>"; };
+		000000000000000000000144 /* PlanPresentationModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanPresentationModels.swift; sourceTree = "<group>"; };
+		000000000000000000000145 /* PlanSurfaceStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanSurfaceStyle.swift; sourceTree = "<group>"; };
+		000000000000000000000146 /* PlanHeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanHeaderView.swift; sourceTree = "<group>"; };
+		000000000000000000000147 /* PlanningModuleRail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanningModuleRail.swift; sourceTree = "<group>"; };
+		000000000000000000000148 /* PlanTimelineFoundation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanTimelineFoundation.swift; sourceTree = "<group>"; };
+		000000000000000000000149 /* TripRequestInterpreter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripRequestInterpreter.swift; sourceTree = "<group>"; };
+		00000000000000000000014A /* TripRequestCorrectionSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripRequestCorrectionSheet.swift; sourceTree = "<group>"; };
+		00000000000000000000014B /* TripPlanningProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripPlanningProgress.swift; sourceTree = "<group>"; };
+		00000000000000000000014C /* PlanningProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanningProgressView.swift; sourceTree = "<group>"; };
+		00000000000000000000014D /* TravelServiceProtocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TravelServiceProtocols.swift; sourceTree = "<group>"; };
+		00000000000000000000014E /* GatewayContracts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayContracts.swift; sourceTree = "<group>"; };
+		00000000000000000000014F /* GatewayTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayTransport.swift; sourceTree = "<group>"; };
+		000000000000000000000150 /* GatewayResponseCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayResponseCache.swift; sourceTree = "<group>"; };
+		000000000000000000000151 /* GIAGatewayClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIAGatewayClient.swift; sourceTree = "<group>"; };
+		000000000000000000000152 /* GatewayTravelService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GatewayTravelService.swift; sourceTree = "<group>"; };
+		000000000000000000000153 /* TripPlanBlueprint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripPlanBlueprint.swift; sourceTree = "<group>"; };
+		000000000000000000000154 /* FlightSearchCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightSearchCoordinator.swift; sourceTree = "<group>"; };
+		000000000000000000000155 /* HotelSearchCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotelSearchCoordinator.swift; sourceTree = "<group>"; };
+		000000000000000000000156 /* PlaceSearchCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceSearchCoordinator.swift; sourceTree = "<group>"; };
+		000000000000000000000157 /* TimedEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimedEvent.swift; sourceTree = "<group>"; };
+		000000000000000000000158 /* EventSearchCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventSearchCoordinator.swift; sourceTree = "<group>"; };
+		000000000000000000000159 /* RoutePlanningCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutePlanningCoordinator.swift; sourceTree = "<group>"; };
+		00000000000000000000015A /* WeatherPlanningAdvisory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherPlanningAdvisory.swift; sourceTree = "<group>"; };
+		00000000000000000000015B /* WeatherSearchCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WeatherSearchCoordinator.swift; sourceTree = "<group>"; };
+		00000000000000000000015C /* TranslatedText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslatedText.swift; sourceTree = "<group>"; };
+		00000000000000000000015D /* FlightPresentationModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightPresentationModels.swift; sourceTree = "<group>"; };
+		00000000000000000000015E /* FlightComparisonSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlightComparisonSection.swift; sourceTree = "<group>"; };
+		00000000000000000000015F /* PlanDebugFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanDebugFixtures.swift; sourceTree = "<group>"; };
+		000000000000000000000160 /* HotelPresentationModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotelPresentationModels.swift; sourceTree = "<group>"; };
+		000000000000000000000161 /* HotelComparisonSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotelComparisonSection.swift; sourceTree = "<group>"; };
+		000000000000000000000162 /* HotelDebugFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HotelDebugFixtures.swift; sourceTree = "<group>"; };
+		000000000000000000000163 /* ItineraryPresentationModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ItineraryPresentationModels.swift; sourceTree = "<group>"; };
+		000000000000000000000164 /* SpatialItineraryTimeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpatialItineraryTimeline.swift; sourceTree = "<group>"; };
+		000000000000000000000165 /* TimelineDebugFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimelineDebugFixtures.swift; sourceTree = "<group>"; };
+		000000000000000000000166 /* BudgetConflict.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BudgetConflict.swift; sourceTree = "<group>"; };
+		000000000000000000000167 /* BudgetConflictEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BudgetConflictEngine.swift; sourceTree = "<group>"; };
+		000000000000000000000168 /* BudgetConflictDebugFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BudgetConflictDebugFixtures.swift; sourceTree = "<group>"; };
+		000000000000000000000169 /* BudgetConflictSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BudgetConflictSection.swift; sourceTree = "<group>"; };
+		00000000000000000000016A /* GIAResponseCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIAResponseCoordinator.swift; sourceTree = "<group>"; };
+		00000000000000000000016B /* BookingConfirmationModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookingConfirmationModels.swift; sourceTree = "<group>"; };
+		00000000000000000000016C /* BookingConfirmationSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BookingConfirmationSheet.swift; sourceTree = "<group>"; };
+		00000000000000000000016D /* GroupCollaboration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupCollaboration.swift; sourceTree = "<group>"; };
+		00000000000000000000016E /* GroupPresentationModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupPresentationModels.swift; sourceTree = "<group>"; };
+		00000000000000000000016F /* GroupDebugFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupDebugFixtures.swift; sourceTree = "<group>"; };
+		000000000000000000000170 /* VotingEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VotingEngine.swift; sourceTree = "<group>"; };
+		000000000000000000000171 /* DecisionPresentationModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DecisionPresentationModels.swift; sourceTree = "<group>"; };
+		000000000000000000000172 /* Communication.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Communication.swift; sourceTree = "<group>"; };
+		000000000000000000000173 /* CommunicationPresentationModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunicationPresentationModels.swift; sourceTree = "<group>"; };
+		000000000000000000000174 /* GroupChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupChatView.swift; sourceTree = "<group>"; };
+		000000000000000000000175 /* PersistenceSchema.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceSchema.swift; sourceTree = "<group>"; };
+		000000000000000000000176 /* TripPersistenceController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripPersistenceController.swift; sourceTree = "<group>"; };
+		000000000000000000000177 /* OfflineTripLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineTripLibraryView.swift; sourceTree = "<group>"; };
+		000000000000000000000178 /* JudgeDemoTripFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JudgeDemoTripFactory.swift; sourceTree = "<group>"; };
+		000000000000000000000179 /* JudgeDemoController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JudgeDemoController.swift; sourceTree = "<group>"; };
+		00000000000000000000017A /* TripIntegrations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripIntegrations.swift; sourceTree = "<group>"; };
+		00000000000000000000017B /* TripReminderPlanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripReminderPlanner.swift; sourceTree = "<group>"; };
+		00000000000000000000017C /* TripNotificationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripNotificationCoordinator.swift; sourceTree = "<group>"; };
+		00000000000000000000017D /* TripCalendarCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripCalendarCoordinator.swift; sourceTree = "<group>"; };
+		00000000000000000000017E /* TripIntegrationSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripIntegrationSection.swift; sourceTree = "<group>"; };
+		00000000000000000000017F /* GIAQualityPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIAQualityPolicy.swift; sourceTree = "<group>"; };
+		000000000000000000000180 /* GIAConversationResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIAConversationResponse.swift; sourceTree = "<group>"; };
+		000000000000000000000186 /* GIAHumanReplyComposer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIAHumanReplyComposer.swift; sourceTree = "<group>"; };
+		000000000000000000000181 /* TransientTripAssembler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransientTripAssembler.swift; sourceTree = "<group>"; };
+		000000000000000000000182 /* TripPlanningOrchestrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TripPlanningOrchestrator.swift; sourceTree = "<group>"; };
+		000000000000000000000183 /* GIAConnectivityMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIAConnectivityMonitor.swift; sourceTree = "<group>"; };
+		000000000000000000000184 /* SpeechActivityDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechActivityDetector.swift; sourceTree = "<group>"; };
+		000000000000000000000185 /* SpeechEndpointRules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechEndpointRules.swift; sourceTree = "<group>"; };
+		000000000000000000000187 /* GIATypedConversationViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIATypedConversationViews.swift; sourceTree = "<group>"; };
+		0000000000000000000000AF /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = Resources/Assets.xcassets; sourceTree = "<group>"; };
+		0000000000000000000000A2 /* GIA.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GIA.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		0000000000000000000000A8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0000000000000000000000A3 = {
+			isa = PBXGroup;
+			children = (
+				0000000000000000000000A5 /* GIA */,
+				0000000000000000000000A4 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		0000000000000000000000A4 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				0000000000000000000000A2 /* GIA.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		0000000000000000000000A5 /* GIA */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000400 /* App */,
+				000000000000000000000401 /* Components */,
+				000000000000000000000402 /* Core */,
+				000000000000000000000421 /* Domain */,
+				000000000000000000000403 /* Features */,
+				0000000000000000000000AF /* Resources/Assets.xcassets */,
+			);
+			path = GIA;
+			sourceTree = "<group>";
+		};
+		000000000000000000000400 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000102 /* AppState.swift */,
+				000000000000000000000104 /* GIAApp.swift */,
+				000000000000000000000105 /* RootContainer.swift */,
+				00000000000000000000014B /* TripPlanningProgress.swift */,
+				000000000000000000000140 /* TripPlanningSession.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		000000000000000000000401 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000418 /* Layout */,
+				00000000000000000000041B /* Menu */,
+				00000000000000000000041C /* Navigation */,
+				00000000000000000000041A /* TopChrome */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		000000000000000000000402 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000406 /* Models */,
+				000000000000000000000425 /* Networking */,
+				000000000000000000000428 /* Persistence */,
+				00000000000000000000042C /* Quality */,
+				000000000000000000000408 /* Theme */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		00000000000000000000042C /* Quality */ = {
+			isa = PBXGroup;
+			children = (
+				00000000000000000000017F /* GIAQualityPolicy.swift */,
+			);
+			path = Quality;
+			sourceTree = "<group>";
+		};
+		000000000000000000000403 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				00000000000000000000041D /* Assistant */,
+				000000000000000000000429 /* Demo */,
+				00000000000000000000040A /* Group */,
+				00000000000000000000040B /* Map */,
+				00000000000000000000040D /* Plan */,
+				00000000000000000000042A /* TravelTools */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		00000000000000000000042A /* TravelTools */ = {
+			isa = PBXGroup;
+			children = (
+				00000000000000000000042B /* Services */,
+			);
+			path = TravelTools;
+			sourceTree = "<group>";
+		};
+		00000000000000000000042B /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				00000000000000000000017D /* TripCalendarCoordinator.swift */,
+				00000000000000000000017C /* TripNotificationCoordinator.swift */,
+				00000000000000000000017B /* TripReminderPlanner.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		000000000000000000000429 /* Demo */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000179 /* JudgeDemoController.swift */,
+				000000000000000000000178 /* JudgeDemoTripFactory.swift */,
+			);
+			path = Demo;
+			sourceTree = "<group>";
+		};
+		000000000000000000000406 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				00000000000000000000012D /* ApplicationActivity.swift */,
+				000000000000000000000108 /* AppTab.swift */,
+				00000000000000000000010B /* LocationContext.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		000000000000000000000408 /* Theme */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000111 /* GIAColor.swift */,
+				000000000000000000000112 /* GIAMotion.swift */,
+				000000000000000000000125 /* GIASpacing.swift */,
+				000000000000000000000113 /* GIATypography.swift */,
+			);
+			path = Theme;
+			sourceTree = "<group>";
+		};
+		00000000000000000000040A /* Group */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000427 /* Models */,
+				000000000000000000000411 /* Views */,
+			);
+			path = Group;
+			sourceTree = "<group>";
+		};
+		00000000000000000000040B /* Map */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000419 /* Earth */,
+				000000000000000000000413 /* ViewModels */,
+				000000000000000000000414 /* Views */,
+			);
+			path = Map;
+			sourceTree = "<group>";
+		};
+		00000000000000000000040D /* Plan */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000423 /* Models */,
+				000000000000000000000424 /* Services */,
+				000000000000000000000417 /* Views */,
+			);
+			path = Plan;
+			sourceTree = "<group>";
+		};
+		000000000000000000000411 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000174 /* GroupChatView.swift */,
+				000000000000000000000118 /* GroupScreen.swift */,
+				000000000000000000000177 /* OfflineTripLibraryView.swift */,
+				00000000000000000000017E /* TripIntegrationSection.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		000000000000000000000427 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000173 /* CommunicationPresentationModels.swift */,
+				000000000000000000000171 /* DecisionPresentationModels.swift */,
+				00000000000000000000016F /* GroupDebugFixtures.swift */,
+				00000000000000000000016E /* GroupPresentationModels.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		000000000000000000000413 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				00000000000000000000011B /* MapViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		000000000000000000000414 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				00000000000000000000011E /* MapScreen.swift */,
+				000000000000000000000135 /* ProceduralStarfieldView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		000000000000000000000417 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				00000000000000000000016C /* BookingConfirmationSheet.swift */,
+				000000000000000000000169 /* BudgetConflictSection.swift */,
+				00000000000000000000015E /* FlightComparisonSection.swift */,
+				000000000000000000000143 /* GIAPlanningIndicator.swift */,
+				000000000000000000000161 /* HotelComparisonSection.swift */,
+				000000000000000000000146 /* PlanHeaderView.swift */,
+				000000000000000000000121 /* PlanScreen.swift */,
+				000000000000000000000145 /* PlanSurfaceStyle.swift */,
+				000000000000000000000148 /* PlanTimelineFoundation.swift */,
+				000000000000000000000147 /* PlanningModuleRail.swift */,
+				00000000000000000000014C /* PlanningProgressView.swift */,
+				000000000000000000000164 /* SpatialItineraryTimeline.swift */,
+				00000000000000000000014A /* TripRequestCorrectionSheet.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		000000000000000000000418 /* Layout */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000124 /* MapStage.swift */,
+			);
+			path = Layout;
+			sourceTree = "<group>";
+		};
+		000000000000000000000419 /* Earth */ = {
+			isa = PBXGroup;
+			children = (
+				00000000000000000000012E /* EarthRenderingConfiguration.swift */,
+				000000000000000000000126 /* EarthSceneController.swift */,
+				000000000000000000000127 /* EarthSceneView.swift */,
+				000000000000000000000131 /* EarthVoiceShader.swift */,
+			);
+			path = Earth;
+			sourceTree = "<group>";
+		};
+		00000000000000000000041A /* TopChrome */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000129 /* HamburgerButton.swift */,
+				000000000000000000000128 /* LocationContextView.swift */,
+				00000000000000000000012A /* MapTopChrome.swift */,
+			);
+			path = TopChrome;
+			sourceTree = "<group>";
+		};
+		00000000000000000000041B /* Menu */ = {
+			isa = PBXGroup;
+			children = (
+				00000000000000000000012B /* EmptyMenuOverlay.swift */,
+			);
+			path = Menu;
+			sourceTree = "<group>";
+		};
+		00000000000000000000041C /* Navigation */ = {
+			isa = PBXGroup;
+			children = (
+				00000000000000000000012C /* BottomNavigationBar.swift */,
+			);
+			path = Navigation;
+			sourceTree = "<group>";
+		};
+		00000000000000000000041D /* Assistant */ = {
+			isa = PBXGroup;
+			children = (
+				00000000000000000000041F /* Models */,
+				000000000000000000000420 /* Services */,
+				00000000000000000000041E /* Views */,
+			);
+			path = Assistant;
+			sourceTree = "<group>";
+		};
+		00000000000000000000041E /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000133 /* GIAActiveVoiceDisc.swift */,
+				00000000000000000000012F /* GIAIdleMark.swift */,
+				000000000000000000000187 /* GIATypedConversationViews.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		00000000000000000000041F /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000130 /* GIAVoiceVisualState.swift */,
+				000000000000000000000184 /* SpeechActivityDetector.swift */,
+				000000000000000000000185 /* SpeechEndpointRules.swift */,
+				000000000000000000000142 /* VoiceRecognitionRules.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		000000000000000000000420 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				00000000000000000000016A /* GIAResponseCoordinator.swift */,
+				000000000000000000000141 /* VoiceSessionCoordinator.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		000000000000000000000421 /* Domain */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000426 /* Services */,
+				000000000000000000000422 /* Trip */,
+			);
+			path = Domain;
+			sourceTree = "<group>";
+		};
+		000000000000000000000422 /* Trip */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000166 /* BudgetConflict.swift */,
+				00000000000000000000013D /* CollaborationAndBooking.swift */,
+				000000000000000000000172 /* Communication.swift */,
+				00000000000000000000016D /* GroupCollaboration.swift */,
+				00000000000000000000013C /* Itinerary.swift */,
+				00000000000000000000013B /* RouteAndWeather.swift */,
+				00000000000000000000013E /* Trip.swift */,
+				00000000000000000000013F /* TripDomainValidation.swift */,
+				00000000000000000000017A /* TripIntegrations.swift */,
+				000000000000000000000139 /* TripRequest.swift */,
+				000000000000000000000157 /* TimedEvent.swift */,
+				000000000000000000000138 /* Traveler.swift */,
+				00000000000000000000013A /* TravelOffers.swift */,
+				000000000000000000000137 /* TravelValueTypes.swift */,
+				000000000000000000000170 /* VotingEngine.swift */,
+			);
+			path = Trip;
+			sourceTree = "<group>";
+		};
+		000000000000000000000423 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				00000000000000000000016B /* BookingConfirmationModels.swift */,
+				000000000000000000000168 /* BudgetConflictDebugFixtures.swift */,
+				00000000000000000000015D /* FlightPresentationModels.swift */,
+				000000000000000000000162 /* HotelDebugFixtures.swift */,
+				000000000000000000000160 /* HotelPresentationModels.swift */,
+				000000000000000000000163 /* ItineraryPresentationModels.swift */,
+				00000000000000000000015F /* PlanDebugFixtures.swift */,
+				000000000000000000000144 /* PlanPresentationModels.swift */,
+				000000000000000000000165 /* TimelineDebugFixtures.swift */,
+				00000000000000000000015A /* WeatherPlanningAdvisory.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		000000000000000000000424 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000167 /* BudgetConflictEngine.swift */,
+				000000000000000000000158 /* EventSearchCoordinator.swift */,
+				000000000000000000000154 /* FlightSearchCoordinator.swift */,
+				000000000000000000000155 /* HotelSearchCoordinator.swift */,
+				000000000000000000000156 /* PlaceSearchCoordinator.swift */,
+				000000000000000000000159 /* RoutePlanningCoordinator.swift */,
+				000000000000000000000181 /* TransientTripAssembler.swift */,
+				000000000000000000000182 /* TripPlanningOrchestrator.swift */,
+				000000000000000000000149 /* TripRequestInterpreter.swift */,
+				00000000000000000000015B /* WeatherSearchCoordinator.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		000000000000000000000425 /* Networking */ = {
+			isa = PBXGroup;
+			children = (
+				00000000000000000000014E /* GatewayContracts.swift */,
+				000000000000000000000183 /* GIAConnectivityMonitor.swift */,
+				000000000000000000000151 /* GIAGatewayClient.swift */,
+				000000000000000000000150 /* GatewayResponseCache.swift */,
+				000000000000000000000152 /* GatewayTravelService.swift */,
+				00000000000000000000014F /* GatewayTransport.swift */,
+			);
+			path = Networking;
+			sourceTree = "<group>";
+		};
+		000000000000000000000428 /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000175 /* PersistenceSchema.swift */,
+				000000000000000000000176 /* TripPersistenceController.swift */,
+			);
+			path = Persistence;
+			sourceTree = "<group>";
+		};
+		000000000000000000000426 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000180 /* GIAConversationResponse.swift */,
+				000000000000000000000186 /* GIAHumanReplyComposer.swift */,
+				00000000000000000000015C /* TranslatedText.swift */,
+				000000000000000000000153 /* TripPlanBlueprint.swift */,
+				00000000000000000000014D /* TravelServiceProtocols.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		0000000000000000000000A1 /* GIA */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0000000000000000000000AA /* Build configuration list for PBXNativeTarget "GIA" */;
+			buildPhases = (
+				0000000000000000000000A6 /* Sources */,
+				0000000000000000000000A8 /* Frameworks */,
+				0000000000000000000000A7 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = GIA;
+			productName = GIA;
+			productReference = 0000000000000000000000A2 /* GIA.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		0000000000000000000000A0 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					0000000000000000000000A1 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = 0000000000000000000000A9 /* Build configuration list for PBXProject "GIA" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 0000000000000000000000A3;
+			productRefGroup = 0000000000000000000000A4 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				0000000000000000000000A1 /* GIA */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		0000000000000000000000A7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0000000000000000000000B0 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		0000000000000000000000A6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				000000000000000000000202 /* AppState.swift in Sources */,
+				000000000000000000000204 /* GIAApp.swift in Sources */,
+				000000000000000000000205 /* RootContainer.swift in Sources */,
+				000000000000000000000208 /* AppTab.swift in Sources */,
+				00000000000000000000020B /* LocationContext.swift in Sources */,
+				000000000000000000000211 /* GIAColor.swift in Sources */,
+				000000000000000000000212 /* GIAMotion.swift in Sources */,
+				000000000000000000000213 /* GIATypography.swift in Sources */,
+				000000000000000000000218 /* GroupScreen.swift in Sources */,
+				00000000000000000000021B /* MapViewModel.swift in Sources */,
+				00000000000000000000021E /* MapScreen.swift in Sources */,
+				000000000000000000000221 /* PlanScreen.swift in Sources */,
+				000000000000000000000224 /* MapStage.swift in Sources */,
+				000000000000000000000225 /* GIASpacing.swift in Sources */,
+				000000000000000000000226 /* EarthSceneController.swift in Sources */,
+				000000000000000000000227 /* EarthSceneView.swift in Sources */,
+				000000000000000000000228 /* LocationContextView.swift in Sources */,
+				000000000000000000000229 /* HamburgerButton.swift in Sources */,
+				00000000000000000000022A /* MapTopChrome.swift in Sources */,
+				00000000000000000000022B /* EmptyMenuOverlay.swift in Sources */,
+				00000000000000000000022C /* BottomNavigationBar.swift in Sources */,
+				00000000000000000000022D /* ApplicationActivity.swift in Sources */,
+				00000000000000000000022E /* EarthRenderingConfiguration.swift in Sources */,
+				00000000000000000000022F /* GIAIdleMark.swift in Sources */,
+				000000000000000000000230 /* GIAVoiceVisualState.swift in Sources */,
+				000000000000000000000231 /* EarthVoiceShader.swift in Sources */,
+				000000000000000000000233 /* GIAActiveVoiceDisc.swift in Sources */,
+				000000000000000000000235 /* ProceduralStarfieldView.swift in Sources */,
+				000000000000000000000237 /* TravelValueTypes.swift in Sources */,
+				000000000000000000000238 /* Traveler.swift in Sources */,
+				000000000000000000000239 /* TripRequest.swift in Sources */,
+				00000000000000000000023A /* TravelOffers.swift in Sources */,
+				00000000000000000000023B /* RouteAndWeather.swift in Sources */,
+				00000000000000000000023C /* Itinerary.swift in Sources */,
+				00000000000000000000023D /* CollaborationAndBooking.swift in Sources */,
+				00000000000000000000023E /* Trip.swift in Sources */,
+				00000000000000000000023F /* TripDomainValidation.swift in Sources */,
+				000000000000000000000240 /* TripPlanningSession.swift in Sources */,
+				000000000000000000000241 /* VoiceSessionCoordinator.swift in Sources */,
+				000000000000000000000242 /* VoiceRecognitionRules.swift in Sources */,
+				000000000000000000000243 /* GIAPlanningIndicator.swift in Sources */,
+				000000000000000000000244 /* PlanPresentationModels.swift in Sources */,
+				000000000000000000000245 /* PlanSurfaceStyle.swift in Sources */,
+				000000000000000000000246 /* PlanHeaderView.swift in Sources */,
+				000000000000000000000247 /* PlanningModuleRail.swift in Sources */,
+				000000000000000000000248 /* PlanTimelineFoundation.swift in Sources */,
+				000000000000000000000249 /* TripRequestInterpreter.swift in Sources */,
+				00000000000000000000024A /* TripRequestCorrectionSheet.swift in Sources */,
+				00000000000000000000024B /* TripPlanningProgress.swift in Sources */,
+				00000000000000000000024C /* PlanningProgressView.swift in Sources */,
+				00000000000000000000024D /* TravelServiceProtocols.swift in Sources */,
+				00000000000000000000024E /* GatewayContracts.swift in Sources */,
+				00000000000000000000024F /* GatewayTransport.swift in Sources */,
+				000000000000000000000250 /* GatewayResponseCache.swift in Sources */,
+				000000000000000000000251 /* GIAGatewayClient.swift in Sources */,
+				000000000000000000000252 /* GatewayTravelService.swift in Sources */,
+				000000000000000000000253 /* TripPlanBlueprint.swift in Sources */,
+				000000000000000000000254 /* FlightSearchCoordinator.swift in Sources */,
+				000000000000000000000255 /* HotelSearchCoordinator.swift in Sources */,
+				000000000000000000000256 /* PlaceSearchCoordinator.swift in Sources */,
+				000000000000000000000257 /* TimedEvent.swift in Sources */,
+				000000000000000000000258 /* EventSearchCoordinator.swift in Sources */,
+				000000000000000000000259 /* RoutePlanningCoordinator.swift in Sources */,
+				00000000000000000000025A /* WeatherPlanningAdvisory.swift in Sources */,
+				00000000000000000000025B /* WeatherSearchCoordinator.swift in Sources */,
+				00000000000000000000025C /* TranslatedText.swift in Sources */,
+				00000000000000000000025D /* FlightPresentationModels.swift in Sources */,
+				00000000000000000000025E /* FlightComparisonSection.swift in Sources */,
+				00000000000000000000025F /* PlanDebugFixtures.swift in Sources */,
+				000000000000000000000260 /* HotelPresentationModels.swift in Sources */,
+				000000000000000000000261 /* HotelComparisonSection.swift in Sources */,
+				000000000000000000000262 /* HotelDebugFixtures.swift in Sources */,
+				000000000000000000000263 /* ItineraryPresentationModels.swift in Sources */,
+				000000000000000000000264 /* SpatialItineraryTimeline.swift in Sources */,
+				000000000000000000000265 /* TimelineDebugFixtures.swift in Sources */,
+				000000000000000000000266 /* BudgetConflict.swift in Sources */,
+				000000000000000000000267 /* BudgetConflictEngine.swift in Sources */,
+				000000000000000000000268 /* BudgetConflictDebugFixtures.swift in Sources */,
+				000000000000000000000269 /* BudgetConflictSection.swift in Sources */,
+				00000000000000000000026A /* GIAResponseCoordinator.swift in Sources */,
+				00000000000000000000026B /* BookingConfirmationModels.swift in Sources */,
+				00000000000000000000026C /* BookingConfirmationSheet.swift in Sources */,
+				00000000000000000000026D /* GroupCollaboration.swift in Sources */,
+				00000000000000000000026E /* GroupPresentationModels.swift in Sources */,
+				00000000000000000000026F /* GroupDebugFixtures.swift in Sources */,
+				000000000000000000000270 /* VotingEngine.swift in Sources */,
+				000000000000000000000271 /* DecisionPresentationModels.swift in Sources */,
+				000000000000000000000272 /* Communication.swift in Sources */,
+				000000000000000000000273 /* CommunicationPresentationModels.swift in Sources */,
+				000000000000000000000274 /* GroupChatView.swift in Sources */,
+				000000000000000000000275 /* PersistenceSchema.swift in Sources */,
+				000000000000000000000276 /* TripPersistenceController.swift in Sources */,
+				000000000000000000000277 /* OfflineTripLibraryView.swift in Sources */,
+				000000000000000000000278 /* JudgeDemoTripFactory.swift in Sources */,
+				000000000000000000000279 /* JudgeDemoController.swift in Sources */,
+				00000000000000000000027A /* TripIntegrations.swift in Sources */,
+				00000000000000000000027B /* TripReminderPlanner.swift in Sources */,
+				00000000000000000000027C /* TripNotificationCoordinator.swift in Sources */,
+				00000000000000000000027D /* TripCalendarCoordinator.swift in Sources */,
+				00000000000000000000027E /* TripIntegrationSection.swift in Sources */,
+				00000000000000000000027F /* GIAQualityPolicy.swift in Sources */,
+				000000000000000000000280 /* GIAConversationResponse.swift in Sources */,
+				000000000000000000000286 /* GIAHumanReplyComposer.swift in Sources */,
+				000000000000000000000281 /* TransientTripAssembler.swift in Sources */,
+				000000000000000000000282 /* TripPlanningOrchestrator.swift in Sources */,
+				000000000000000000000283 /* GIAConnectivityMonitor.swift in Sources */,
+				000000000000000000000284 /* SpeechActivityDetector.swift in Sources */,
+				000000000000000000000285 /* SpeechEndpointRules.swift in Sources */,
+				000000000000000000000287 /* GIATypedConversationViews.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		0000000000000000000000AB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		0000000000000000000000AC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_VERSION = 5.0;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		0000000000000000000000AD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "G.I.A.";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.travel";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "G.I.A. adds selected itinerary items to your calendar only when you choose Export Plan.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "G.I.A. listens for its name, transcribes travel requests, and uses microphone volume to animate its voice surface. Audio is not stored by G.I.A.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "G.I.A. uses speech recognition to detect its name and transcribe your spoken travel request.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.abhijandyala.GIA;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		0000000000000000000000AE /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "G.I.A.";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.travel";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "G.I.A. adds selected itinerary items to your calendar only when you choose Export Plan.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "G.I.A. listens for its name, transcribes travel requests, and uses microphone volume to animate its voice surface. Audio is not stored by G.I.A.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "G.I.A. uses speech recognition to detect its name and transcribe your spoken travel request.";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = UIStatusBarStyleLightContent;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.abhijandyala.GIA;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		0000000000000000000000A9 /* Build configuration list for PBXProject "GIA" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0000000000000000000000AB /* Debug */,
+				0000000000000000000000AC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		0000000000000000000000AA /* Build configuration list for PBXNativeTarget "GIA" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0000000000000000000000AD /* Debug */,
+				0000000000000000000000AE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 0000000000000000000000A0 /* Project object */;
+}

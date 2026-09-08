@@ -1,0 +1,28 @@
+# Secrets. Never commit provider keys or gateway tokens.
+.env
+.env.*
+!.env.example
+Gateway/.env
+
+# Dependencies
+Gateway/node_modules/
+
+# Xcode
+xcuserdata/
+DerivedData/
+*.xcuserstate
+*.xccheckout
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# macOS
+.DS_Store
+
+# Local project tooling
+.projects/cache
+.projects/vault
+.projects/state.test.json
+.projects/state.local.test.json
