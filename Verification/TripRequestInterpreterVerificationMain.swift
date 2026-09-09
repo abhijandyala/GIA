@@ -68,6 +68,7 @@ enum TripRequestInterpreterVerificationMain {
 
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = .current
+        calendar.locale = Locale(identifier: "en_US")
         let today = calendar.startOfDay(for: now)
         func dayString(_ date: Date) -> String {
             let formatter = DateFormatter()
@@ -108,6 +109,60 @@ enum TripRequestInterpreterVerificationMain {
         precondition(
             !TripRequestInterpreter.validate(
                 spokenDates,
+                now: now
+            ).contains { $0.field == .dates }
+        )
+
+        guard
+            let throughNextWeek =
+                TripRequestInterpreter.interpretClarificationAnswer(
+                    "today through next week",
+                    for: .dates,
+                    applyingTo: spoken.request,
+                    now: now
+                ),
+            let fromNextWeek =
+                TripRequestInterpreter.interpretClarificationAnswer(
+                    "today form enxt week",
+                    for: .dates,
+                    applyingTo: spoken.request,
+                    now: now
+                )
+        else {
+            preconditionFailure(
+                "Expected today through next week to set travel dates"
+            )
+        }
+        let nextWeekStart = calendar.date(
+            byAdding: .weekOfYear,
+            value: 1,
+            to: calendar.date(
+                from: calendar.dateComponents(
+                    [.yearForWeekOfYear, .weekOfYear],
+                    from: today
+                )
+            ) ?? today
+        ) ?? today
+        let nextWeekEnd = calendar.date(
+            byAdding: .day,
+            value: 6,
+            to: nextWeekStart
+        ) ?? nextWeekStart
+        precondition(
+            dayString(throughNextWeek.dateRange?.start ?? .distantPast)
+                == dayString(today)
+        )
+        precondition(
+            dayString(throughNextWeek.dateRange?.end ?? .distantPast)
+                == dayString(nextWeekEnd)
+        )
+        precondition(
+            dayString(fromNextWeek.dateRange?.end ?? .distantPast)
+                == dayString(nextWeekEnd)
+        )
+        precondition(
+            !TripRequestInterpreter.validate(
+                throughNextWeek,
                 now: now
             ).contains { $0.field == .dates }
         )

@@ -87,24 +87,20 @@ struct SpatialItineraryTimeline: View {
     private var sectionHeader: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text("DAILY PLAN")
-                    .font(.caption2.weight(.semibold))
-                    .tracking(2.1)
-                    .foregroundStyle(
-                        GIAColor.primaryText.opacity(0.48)
-                    )
+                Text("Days")
+                    .font(.headline.weight(.medium))
+                    .foregroundStyle(GIAColor.primaryText)
 
-                Text("\(days.count) itinerary days")
+                Text(
+                    days.count == 1
+                        ? "1 day"
+                        : "\(days.count) days"
+                )
                     .font(.caption)
                     .foregroundStyle(GIAColor.secondaryText)
             }
 
             Spacer()
-
-            Text("15 MIN SNAP")
-                .font(.system(size: 9, weight: .semibold))
-                .tracking(1.2)
-                .foregroundStyle(GIAColor.secondaryText)
         }
     }
 
@@ -302,7 +298,7 @@ private struct TimelineItemRow: View {
 
                     Button(action: onToggleExpanded) {
                         HStack(spacing: 5) {
-                            Text(isExpanded ? "LESS" : "DETAILS")
+                            Text(isExpanded ? "Less" : "Details")
                             Image(
                                 systemName:
                                     isExpanded
@@ -310,7 +306,7 @@ private struct TimelineItemRow: View {
                                     : "chevron.down"
                             )
                         }
-                        .font(.system(size: 9, weight: .semibold))
+                        .font(.caption.weight(.semibold))
                         .tracking(1)
                         .foregroundStyle(GIAColor.secondaryText)
                     }

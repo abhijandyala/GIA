@@ -167,31 +167,83 @@ enum PlanClarificationBuilder {
     }
 }
 
+enum PlanJumpAnchor: String, CaseIterable, Identifiable {
+    case days = "itinerary-timeline"
+    case flights = "flight-comparison"
+    case stay = "hotel-comparison"
+    case budget = "budget-conflict"
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .days:
+            "Days"
+        case .flights:
+            "Flights"
+        case .stay:
+            "Stay"
+        case .budget:
+            "Budget"
+        }
+    }
+}
+
 enum PlanPhasePresentation {
     static func title(for phase: TripPlanningPhase) -> String {
         switch phase {
         case .validating:
-            "UNDERSTANDING REQUEST"
+            "Understanding your trip"
         case .needsClarification:
-            "ONE MORE DETAIL"
+            "One more detail"
         case .searching:
-            "SEARCHING"
+            "Finding travel options"
         case .comparing:
-            "COMPARING OPTIONS"
+            "Comparing options"
         case .buildingItinerary:
-            "BUILDING YOUR PLAN"
+            "Building your days"
         case .presenting:
-            "PREPARING RESULTS"
+            "Putting the plan together"
         case .partiallyAvailable:
-            "PARTIAL RESULTS"
+            "Some results are missing"
         case .ready:
-            "PLAN READY"
+            "Your plan"
         case .failed:
-            "PLANNING PAUSED"
+            "Planning paused"
         case .cancelled:
-            "REQUEST CANCELLED"
+            "Request cancelled"
         default:
-            "LISTENING"
+            "Listening"
+        }
+    }
+
+    static func workspaceStatus(
+        phase: TripPlanningPhase,
+        orchestration: TripOrchestrationState,
+        failureMessage: String?
+    ) -> String? {
+        switch orchestration {
+        case .resolvingLocation:
+            return "Finding the destination"
+        case .searching:
+            return "Finding travel options"
+        case .assembling:
+            return "Building your days"
+        case .partiallyAvailable:
+            return "Some results are missing"
+        case .failed:
+            return failureMessage ?? "Planning paused"
+        case .ready, .idle, .cancelled:
+            break
+        }
+
+        switch phase {
+        case .ready, .cancelled, .idle:
+            return nil
+        case .failed:
+            return failureMessage ?? title(for: phase)
+        default:
+            return title(for: phase)
         }
     }
 
@@ -325,7 +377,7 @@ enum PlanPresentationBuilder {
     ) -> String {
         guard let range else {
             if let durationDays {
-                return "\(durationDays) days · choose dates"
+                return "\(durationDays) days. Choose dates"
             }
             return "Resolving"
         }
@@ -336,7 +388,7 @@ enum PlanPresentationBuilder {
         formatter.setLocalizedDateFormatFromTemplate("MMM d")
         let start = formatter.string(from: range.start)
         let end = formatter.string(from: range.end)
-        return "\(start)–\(end)"
+        return "\(start) to \(end)"
     }
 
     private static func formattedTravelers(

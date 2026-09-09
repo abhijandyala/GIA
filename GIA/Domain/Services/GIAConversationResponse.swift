@@ -133,55 +133,6 @@ struct GIAConversationMemory: Equatable, Sendable {
     }
 }
 
-enum GIASpokenPhraseSplitter {
-    static func leadingPhrase(in text: String) -> String {
-        let trimmed = text.trimmingCharacters(
-            in: .whitespacesAndNewlines
-        )
-        guard trimmed.count >= 12 else { return trimmed }
-        let regex = try? NSRegularExpression(
-            pattern:
-                #"^([\s\S]{12,}?[.!?])(?:\s+[A-Z0-9“"‘]|$)"#
-        )
-        let range = NSRange(trimmed.startIndex..., in: trimmed)
-        guard
-            let match = regex?.firstMatch(
-                in: trimmed,
-                range: range
-            ),
-            let leadingRange = Range(
-                match.range(at: 1),
-                in: trimmed
-            )
-        else {
-            return trimmed
-        }
-        let leading = String(trimmed[leadingRange])
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        return leading.count < trimmed.count ? leading : trimmed
-    }
-
-    static func remainder(
-        after leading: String,
-        in full: String
-    ) -> String {
-        let trimmedFull = full.trimmingCharacters(
-            in: .whitespacesAndNewlines
-        )
-        let trimmedLead = leading.trimmingCharacters(
-            in: .whitespacesAndNewlines
-        )
-        guard
-            !trimmedLead.isEmpty,
-            trimmedFull.hasPrefix(trimmedLead)
-        else {
-            return ""
-        }
-        return String(trimmedFull.dropFirst(trimmedLead.count))
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-}
-
 struct GIAConversationResponse:
     Codable,
     Hashable,
@@ -237,6 +188,51 @@ enum GIAConversationCopy {
 
     static func spoken(_ text: String) -> String {
         cleaned(text)
+    }
+
+    static func firstSpokenPhrase(_ text: String) -> String {
+        let trimmed = spoken(text)
+        guard trimmed.count >= 12 else {
+            return trimmed
+        }
+
+        var index = trimmed.index(trimmed.startIndex, offsetBy: 11)
+        while index < trimmed.endIndex {
+            let character = trimmed[index]
+            if character == "." || character == "!" || character == "?" {
+                let phrase = String(trimmed[trimmed.startIndex...index])
+                let remainder = trimmed[trimmed.index(after: index)...]
+                    .drop(while: { $0.isWhitespace })
+                if remainder.isEmpty {
+                    return trimmed
+                }
+                let next = remainder[remainder.startIndex]
+                if next.isNumber || next.isUppercase {
+                    return phrase.trimmingCharacters(
+                        in: .whitespacesAndNewlines
+                    )
+                }
+            }
+            index = trimmed.index(after: index)
+        }
+        return trimmed
+    }
+
+    static func spokenPlaybackSegments(for text: String) -> [String] {
+        let spokenText = spoken(text)
+        guard !spokenText.isEmpty else {
+            return []
+        }
+        let first = firstSpokenPhrase(spokenText)
+        guard first.count >= 12, first.count < spokenText.count else {
+            return [spokenText]
+        }
+        let rest = spokenText.dropFirst(first.count)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !rest.isEmpty else {
+            return [spokenText]
+        }
+        return [first, rest]
     }
 
     private static func cleaned(_ text: String) -> String {

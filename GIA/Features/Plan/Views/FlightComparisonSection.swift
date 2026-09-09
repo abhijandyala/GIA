@@ -12,6 +12,7 @@ struct FlightComparisonSection: View {
     @State private var comparisonIDs: Set<UUID> = []
     @State private var isDetailExpanded = false
     @State private var isComparisonPresented = false
+    @State private var showsMoreOptions = false
     @Environment(\.accessibilityReduceMotion)
     private var reduceMotion
 
@@ -60,6 +61,28 @@ struct FlightComparisonSection: View {
             }
 
             if presentations.count > 1 {
+                Button {
+                    withAnimation(
+                        reduceMotion
+                            ? .linear(duration: 0.01)
+                            : .easeOut(duration: 0.2)
+                    ) {
+                        showsMoreOptions.toggle()
+                    }
+                } label: {
+                    Text(
+                        showsMoreOptions
+                            ? "Hide other flights"
+                            : moreOptionsTitle
+                    )
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(GIAColor.intelligenceAccent)
+                    .frame(minHeight: 44)
+                }
+                .buttonStyle(.plain)
+            }
+
+            if showsMoreOptions, presentations.count > 1 {
                 alternatives
             }
 
@@ -68,9 +91,8 @@ struct FlightComparisonSection: View {
                     isComparisonPresented = true
                 } label: {
                     HStack {
-                        Text("COMPARE \(comparisonIDs.count) OPTIONS")
-                            .font(.caption.weight(.semibold))
-                            .tracking(1.5)
+                        Text("Compare \(comparisonIDs.count) flights")
+                            .font(.subheadline.weight(.semibold))
 
                         Spacer()
 
@@ -119,14 +141,15 @@ struct FlightComparisonSection: View {
     private var sectionHeader: some View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("FLIGHT OPTIONS")
-                    .font(.caption2.weight(.semibold))
-                    .tracking(2.1)
-                    .foregroundStyle(
-                        GIAColor.primaryText.opacity(0.48)
-                    )
+                Text("Flights")
+                    .font(.headline.weight(.medium))
+                    .foregroundStyle(GIAColor.primaryText)
 
-                Text("\(offers.count) sourced options")
+                Text(
+                    offers.count == 1
+                        ? "1 option"
+                        : "\(offers.count) options"
+                )
                     .font(.caption)
                     .foregroundStyle(GIAColor.secondaryText)
             }
@@ -134,8 +157,7 @@ struct FlightComparisonSection: View {
             Spacer()
 
             Text(bookingStatusLabel)
-                .font(.system(size: 9, weight: .semibold))
-                .tracking(1.2)
+                .font(.caption.weight(.semibold))
                 .foregroundStyle(bookingStatusColor)
         }
     }
@@ -148,16 +170,23 @@ struct FlightComparisonSection: View {
         }
     }
 
+    private var moreOptionsTitle: String {
+        let extras = max(offers.count - 1, 0)
+        return extras == 1
+            ? "More options"
+            : "More options (\(extras))"
+    }
+
     private var bookingStatusLabel: String {
         switch selectedBooking?.status {
         case .demoConfirmed:
-            "DEMO CONFIRMED"
+            "Demo confirmed"
         case .confirmed:
-            "PROVIDER CONFIRMED"
+            "Booked"
         case .externalCheckoutRequired, .processing:
-            "CHECKOUT REQUIRED"
+            "Checkout needed"
         default:
-            "NO BOOKING MADE"
+            "No booking yet"
         }
     }
 
@@ -176,11 +205,10 @@ struct FlightComparisonSection: View {
 
     private var alternatives: some View {
         VStack(alignment: .leading, spacing: 11) {
-            Text("ALTERNATIVES")
-                .font(.caption2.weight(.semibold))
-                .tracking(1.8)
+            Text("Other flights")
+                .font(.caption.weight(.semibold))
                 .foregroundStyle(
-                    GIAColor.primaryText.opacity(0.38)
+                    GIAColor.primaryText.opacity(0.55)
                 )
 
             ScrollView(.horizontal, showsIndicators: false) {
@@ -236,6 +264,7 @@ struct FlightComparisonSection: View {
         comparisonIDs = Set(
             presentations.prefix(3).map(\.id)
         )
+        showsMoreOptions = true
         Task {
             try? await Task.sleep(nanoseconds: 350_000_000)
             isComparisonPresented = true
@@ -257,65 +286,66 @@ private struct FeaturedFlightCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                if let badge = flight.primaryBadge {
-                    Text(badge)
-                        .font(.system(size: 9, weight: .semibold))
-                        .tracking(1.4)
-                        .foregroundStyle(GIAColor.intelligenceAccent)
-                } else {
-                    Text("FLIGHT OPTION")
-                        .font(.system(size: 9, weight: .semibold))
-                        .tracking(1.4)
-                        .foregroundStyle(GIAColor.secondaryText)
-                }
+            HStack(alignment: .firstTextBaseline) {
+                Text(flight.airlineName)
+                    .font(.headline.weight(.medium))
+                    .foregroundStyle(GIAColor.primaryText)
 
-                Spacer()
+                Spacer(minLength: 8)
 
-                SourcePill(label: flight.sourceLabel)
+                Text(flight.totalPrice)
+                    .font(.headline.monospacedDigit().weight(.semibold))
+                    .foregroundStyle(GIAColor.primaryText)
             }
-
-            Text(flight.airlineName)
-                .font(.title3.weight(.medium))
-                .foregroundStyle(GIAColor.primaryText)
-                .padding(.top, 14)
 
             Text(flight.departureDate)
                 .font(.caption)
                 .foregroundStyle(GIAColor.secondaryText)
-                .padding(.top, 3)
+                .padding(.top, 4)
 
             FlightRouteLine(flight: flight)
-                .padding(.top, 21)
+                .padding(.top, 14)
 
-            HStack(spacing: 0) {
-                FlightMetric(
-                    title: "DURATION",
-                    value: flight.duration
-                )
+            Text(
+                "\(flight.duration)  ·  \(flight.stopDescription)"
+            )
+            .font(.caption)
+            .foregroundStyle(GIAColor.secondaryText)
+            .padding(.top, 10)
 
-                FlightMetric(
-                    title: "ROUTE",
-                    value: flight.stopDescription
-                )
-
-                FlightMetric(
-                    title: "TOTAL",
-                    value: flight.totalPrice
-                )
+            if isDetailExpanded {
+                extraDetails
+                    .padding(.top, 12)
+                    .transition(
+                        .opacity.combined(with: .move(edge: .top))
+                    )
             }
-            .padding(.top, 23)
 
-            if
-                let priceInsight = flight.priceInsightDescription
-            {
+            actions
+                .padding(.top, 6)
+        }
+        .padding(16)
+        .planSurface(cornerRadius: 22)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(flight.accessibilitySummary)
+    }
+
+    @ViewBuilder
+    private var extraDetails: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if let badge = flight.primaryBadge {
+                Text(badge)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(GIAColor.intelligenceAccent)
+            }
+
+            if let priceInsight = flight.priceInsightDescription {
                 Label(
                     priceInsight,
                     systemImage: flight.priceInsightSymbol
                 )
                 .font(.caption.weight(.medium))
                 .foregroundStyle(GIAColor.intelligenceAccent)
-                .padding(.top, 18)
             }
 
             if !flight.hasResolvedTimeZones {
@@ -325,7 +355,6 @@ private struct FeaturedFlightCard: View {
                 )
                 .font(.caption)
                 .foregroundStyle(GIAColor.secondaryText)
-                .padding(.top, 13)
             }
 
             if let returnStatus = flight.returnStatus {
@@ -335,146 +364,9 @@ private struct FeaturedFlightCard: View {
                 )
                 .font(.caption)
                 .foregroundStyle(GIAColor.secondaryText)
-                .padding(.top, 13)
             }
 
-            Button {
-                withAnimation(
-                    reduceMotion
-                        ? .linear(duration: 0.01)
-                        : .easeInOut(duration: 0.22)
-                ) {
-                    isDetailExpanded.toggle()
-                }
-            } label: {
-                HStack {
-                    Text(
-                        isDetailExpanded
-                            ? "HIDE DETAILS"
-                            : "VIEW DETAILS"
-                    )
-                    .font(.caption2.weight(.semibold))
-                    .tracking(1.3)
-
-                    Spacer()
-
-                    Image(
-                        systemName:
-                            isDetailExpanded
-                            ? "chevron.up"
-                            : "chevron.down"
-                    )
-                    .font(.caption2.weight(.semibold))
-                }
-                .foregroundStyle(GIAColor.secondaryText)
-                .padding(.vertical, 15)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(
-                isDetailExpanded
-                    ? "Hide flight details"
-                    : "View flight details"
-            )
-            .padding(.top, 5)
-
-            if isDetailExpanded {
-                FlightDetailView(flight: flight)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
-            }
-
-            Rectangle()
-                .fill(GIAColor.subtleStroke)
-                .frame(height: 0.6)
-                .padding(.bottom, 15)
-
-            actions
-        }
-        .padding(20)
-        .planSurface(cornerRadius: 24)
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel(flight.accessibilitySummary)
-    }
-
-    private var actions: some View {
-        VStack(spacing: 10) {
-            HStack(spacing: 10) {
-                Button(action: onSelect) {
-                    Group {
-                        if isCompleting {
-                            HStack(spacing: 8) {
-                                ProgressView()
-                                    .controlSize(.small)
-                                Text("LOADING RETURN OPTIONS")
-                            }
-                        } else {
-                            Text(
-                                isSelected
-                                    ? "REVIEW SELECTION"
-                                    : "SELECT FLIGHT"
-                            )
-                        }
-                    }
-                        .font(.caption2.weight(.semibold))
-                        .tracking(1.1)
-                        .foregroundStyle(
-                            isSelected
-                                ? GIAColor.intelligenceAccent
-                                : GIAColor.canvas
-                        )
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: 43)
-                        .background {
-                            Capsule(style: .continuous)
-                                .fill(
-                                    isSelected
-                                        ? GIAColor
-                                            .intelligenceAccent
-                                            .opacity(0.09)
-                                        : GIAColor.primaryText
-                                )
-                        }
-                        .overlay {
-                            Capsule(style: .continuous)
-                                .stroke(
-                                    isSelected
-                                        ? GIAColor
-                                            .intelligenceAccent
-                                            .opacity(0.42)
-                                        : .clear,
-                                    lineWidth: 0.8
-                                )
-                        }
-                }
-                .buttonStyle(.plain)
-                .disabled(isCompleting)
-
-                Button(action: onToggleComparison) {
-                    Image(
-                        systemName:
-                            isCompared
-                            ? "checkmark.circle.fill"
-                            : "plus.circle"
-                    )
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(
-                        isCompared
-                            ? GIAColor.intelligenceAccent
-                            : GIAColor.secondaryText
-                    )
-                    .frame(width: 44, height: 44)
-                    .background {
-                        Circle()
-                            .fill(GIAColor.primaryText.opacity(0.055))
-                    }
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(
-                    isCompared
-                        ? "Remove from comparison"
-                        : "Add to comparison"
-                )
-            }
+            FlightDetailView(flight: flight)
 
             if
                 let bookingURL = flight.offer.bookingURL,
@@ -482,17 +374,14 @@ private struct FeaturedFlightCard: View {
             {
                 Link(destination: bookingURL) {
                     HStack {
-                        Text("VIEW WITH PROVIDER")
-                            .font(.caption2.weight(.semibold))
-                            .tracking(1.1)
-
+                        Text("Open booking site")
+                            .font(.caption.weight(.semibold))
                         Spacer()
-
                         Image(systemName: "arrow.up.right")
                     }
                     .foregroundStyle(GIAColor.secondaryText)
-                    .padding(.horizontal, 15)
-                    .frame(minHeight: 41)
+                    .padding(.horizontal, 14)
+                    .frame(minHeight: 40)
                     .background {
                         Capsule(style: .continuous)
                             .fill(GIAColor.primaryText.opacity(0.045))
@@ -502,6 +391,87 @@ private struct FeaturedFlightCard: View {
                     "Opens an external provider. No booking has been made."
                 )
             }
+        }
+    }
+
+    private var actions: some View {
+        HStack(spacing: 12) {
+            Button {
+                withAnimation(
+                    reduceMotion
+                        ? .linear(duration: 0.01)
+                        : .easeInOut(duration: 0.22)
+                ) {
+                    isDetailExpanded.toggle()
+                }
+            } label: {
+                Text(isDetailExpanded ? "Less" : "Details")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(GIAColor.secondaryText)
+                    .frame(minHeight: 44)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(
+                isDetailExpanded
+                    ? "Hide flight details"
+                    : "View flight details"
+            )
+
+            Spacer()
+
+            Button(action: onToggleComparison) {
+                Image(
+                    systemName:
+                        isCompared
+                        ? "checkmark.circle.fill"
+                        : "plus.circle"
+                )
+                .font(.system(size: 18, weight: .medium))
+                .foregroundStyle(
+                    isCompared
+                        ? GIAColor.intelligenceAccent
+                        : GIAColor.secondaryText
+                )
+                .frame(width: 44, height: 44)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(
+                isCompared
+                    ? "Remove from comparison"
+                    : "Add to comparison"
+            )
+
+            Button(action: onSelect) {
+                Group {
+                    if isCompleting {
+                        HStack(spacing: 8) {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text("Loading")
+                        }
+                    } else {
+                        Text(isSelected ? "Selected" : "Select")
+                    }
+                }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(
+                    isSelected
+                        ? GIAColor.intelligenceAccent
+                        : GIAColor.canvas
+                )
+                .padding(.horizontal, 16)
+                .frame(minHeight: 44)
+                .background {
+                    Capsule(style: .continuous)
+                        .fill(
+                            isSelected
+                                ? GIAColor.intelligenceAccent.opacity(0.10)
+                                : GIAColor.primaryText
+                        )
+                }
+            }
+            .buttonStyle(.plain)
+            .disabled(isCompleting)
         }
     }
 }

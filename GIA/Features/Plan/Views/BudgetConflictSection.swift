@@ -3,54 +3,103 @@ import SwiftUI
 struct BudgetConflictSection: View {
     let analysis: TripBudgetConflictAnalysis
 
+    @State private var isExpanded = false
+    @State private var didApplyDefaultExpansion = false
+    @Environment(\.accessibilityReduceMotion)
+    private var reduceMotion
+
     private var budget: TripBudgetSummary {
         analysis.budget
     }
 
+    private var shouldExpandByDefault: Bool {
+        budget.isOverLimit || !analysis.conflicts.isEmpty
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            sectionHeader
-            budgetOverview
-            categoryLedger
-            conflictLedger
-            evidenceFooter
+            compactHeader
+
+            if isExpanded {
+                budgetOverview
+                categoryLedger
+                conflictLedger
+                evidenceFooter
+            }
+        }
+        .onAppear {
+            if !didApplyDefaultExpansion {
+                isExpanded = shouldExpandByDefault
+                didApplyDefaultExpansion = true
+            }
         }
     }
 
-    private var sectionHeader: some View {
-        HStack(alignment: .bottom) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("BUDGET / CONFLICT CORE")
-                    .font(.caption2.weight(.semibold))
-                    .tracking(2.1)
-                    .foregroundStyle(
-                        GIAColor.primaryText.opacity(0.48)
-                    )
-
-                Text("Deterministic trip analysis")
-                    .font(.caption)
-                    .foregroundStyle(GIAColor.secondaryText)
+    private var compactHeader: some View {
+        Button {
+            withAnimation(
+                reduceMotion
+                    ? .linear(duration: 0.01)
+                    : .easeOut(duration: 0.2)
+            ) {
+                isExpanded.toggle()
             }
+        } label: {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Budget")
+                        .font(.headline.weight(.medium))
+                        .foregroundStyle(GIAColor.primaryText)
 
-            Spacer()
+                    Text(compactSummary)
+                        .font(.caption)
+                        .foregroundStyle(
+                            budget.isOverLimit
+                                ? GIAColor.warningAccent
+                                : GIAColor.secondaryText
+                        )
+                }
 
-            Label(
-                analysis.conflicts.isEmpty
-                    ? "CLEAR"
-                    : "\(analysis.conflicts.count) FLAGS",
-                systemImage:
-                    analysis.conflicts.isEmpty
-                    ? "checkmark.circle"
-                    : "exclamationmark.triangle"
-            )
-            .font(.system(size: 9, weight: .semibold))
-            .tracking(1.1)
-            .foregroundStyle(
-                analysis.conflicts.isEmpty
-                    ? GIAColor.confirmedAccent
-                    : GIAColor.warningAccent
-            )
+                Spacer(minLength: 8)
+
+                if !analysis.conflicts.isEmpty {
+                    Text(
+                        analysis.conflicts.count == 1
+                            ? "1 issue"
+                            : "\(analysis.conflicts.count) issues"
+                    )
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(GIAColor.warningAccent)
+                }
+
+                Image(
+                    systemName: isExpanded
+                        ? "chevron.up"
+                        : "chevron.down"
+                )
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(GIAColor.secondaryText)
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .planSurface(cornerRadius: 20)
         }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Budget")
+        .accessibilityValue(compactSummary)
+        .accessibilityHint(
+            isExpanded ? "Hides budget details" : "Shows budget details"
+        )
+    }
+
+    private var compactSummary: String {
+        if let limit = budget.totalLimit {
+            if budget.isOverLimit {
+                return "Over \(money(limit))"
+            }
+            return "\(money(budget.plannedSpend)) of \(money(limit))"
+        }
+        return "\(money(budget.plannedSpend)). No limit set"
     }
 
     private var budgetOverview: some View {
@@ -59,7 +108,7 @@ struct BudgetConflictSection: View {
 
             VStack(alignment: .leading, spacing: 13) {
                 metric(
-                    label: "PLANNED",
+                    label: "Planned",
                     value: money(budget.plannedSpend),
                     detail:
                         budget.confirmedSpend.amount > 0
@@ -70,8 +119,8 @@ struct BudgetConflictSection: View {
                 metric(
                     label:
                         budget.isOverLimit
-                        ? "OVER LIMIT"
-                        : "AVAILABLE",
+                        ? "Over limit"
+                        : "Available",
                     value: budget.remainingAfterReserve.map {
                         money(
                             Money(
@@ -126,8 +175,7 @@ struct BudgetConflictSection: View {
                     .foregroundStyle(GIAColor.primaryText)
 
                 Text("ALLOCATED")
-                    .font(.system(size: 7, weight: .semibold))
-                    .tracking(1)
+                    .font(.caption2.weight(.semibold))
                     .foregroundStyle(GIAColor.secondaryText)
             }
         }
@@ -138,9 +186,8 @@ struct BudgetConflictSection: View {
     private var categoryLedger: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
-                Text("CATEGORY LEDGER")
-                    .font(.caption2.weight(.semibold))
-                    .tracking(1.5)
+                Text("Categories")
+                    .font(.caption.weight(.semibold))
                     .foregroundStyle(GIAColor.secondaryText)
 
                 Spacer()
@@ -198,9 +245,8 @@ struct BudgetConflictSection: View {
         } else {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
-                    Text("CONFLICT LEDGER")
-                        .font(.caption2.weight(.semibold))
-                        .tracking(1.5)
+                    Text("Issues")
+                        .font(.caption.weight(.semibold))
                         .foregroundStyle(GIAColor.secondaryText)
 
                     Spacer()
@@ -223,7 +269,7 @@ struct BudgetConflictSection: View {
     private var evidenceFooter: some View {
         VStack(alignment: .leading, spacing: 5) {
             Label(
-                "Calculated locally — GPT does not set totals",
+                "Calculated locally. GPT does not set totals",
                 systemImage: "function"
             )
 
@@ -279,7 +325,7 @@ struct BudgetConflictSection: View {
         guard
             let limit = budget.totalLimit,
             limit.amount > 0
-        else { return "—" }
+        else { return "0%" }
         let ratio = NSDecimalNumber(
             decimal: budget.plannedSpend.amount / limit.amount
         ).doubleValue

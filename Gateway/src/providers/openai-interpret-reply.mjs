@@ -66,6 +66,9 @@ accessibility, or a yes/no about continuing: set understanding to
 Resolve relative dates using the supplied today value as YYYY-MM-DD.
 "now", "today", and "tonight" start today.
 "a week" / "for a week" is 7 days.
+"today through next week", "today from next week", "today to next week",
+and "today for next week" start today and end on the last day of next
+week. Treat "form" as "from" and "enxt week" as "next week".
 If they give a leave window and a stay length, such as "now till next
 week I can go, and stay for a week", start as soon as today and make
 dateEnd the inclusive last day of that stay.

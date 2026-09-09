@@ -7,6 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		000000000000000000000290 /* GIAConversationRegressionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000190 /* GIAConversationRegressionTests.swift */; };
+		000000000000000000000291 /* GIAVoiceTurnPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000191 /* GIAVoiceTurnPolicy.swift */; };
+		000000000000000000000292 /* GIASpokenConversationFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000192 /* GIASpokenConversationFlow.swift */; };
+		000000000000000000000293 /* GIASpokenConversationFlowTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000193 /* GIASpokenConversationFlowTests.swift */; };
+		000000000000000000000294 /* PlanWorkspacePresentationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000194 /* PlanWorkspacePresentationTests.swift */; };
 		000000000000000000000202 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000102 /* AppState.swift */; };
 		000000000000000000000204 /* GIAApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000104 /* GIAApp.swift */; };
 		000000000000000000000205 /* RootContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 000000000000000000000105 /* RootContainer.swift */; };
@@ -120,6 +125,12 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		000000000000000000000190 /* GIAConversationRegressionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIAConversationRegressionTests.swift; sourceTree = "<group>"; };
+		000000000000000000000191 /* GIAVoiceTurnPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIAVoiceTurnPolicy.swift; sourceTree = "<group>"; };
+		000000000000000000000192 /* GIASpokenConversationFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIASpokenConversationFlow.swift; sourceTree = "<group>"; };
+		000000000000000000000193 /* GIASpokenConversationFlowTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIASpokenConversationFlowTests.swift; sourceTree = "<group>"; };
+		000000000000000000000194 /* PlanWorkspacePresentationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanWorkspacePresentationTests.swift; sourceTree = "<group>"; };
+		0000000000000000000000B1 /* GIAUnitTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GIAUnitTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		000000000000000000000102 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		000000000000000000000104 /* GIAApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIAApp.swift; sourceTree = "<group>"; };
 		000000000000000000000105 /* RootContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootContainer.swift; sourceTree = "<group>"; };
@@ -233,7 +244,24 @@
 		0000000000000000000000A2 /* GIA.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GIA.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXContainerItemProxy section */
+		000000000000000000000500 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0000000000000000000000A0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 0000000000000000000000A1;
+			remoteInfo = GIA;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFrameworksBuildPhase section */
+		0000000000000000000000B4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		0000000000000000000000A8 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -248,6 +276,7 @@
 			isa = PBXGroup;
 			children = (
 				0000000000000000000000A5 /* GIA */,
+				000000000000000000000430 /* GIAUnitTests */,
 				0000000000000000000000A4 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -256,6 +285,7 @@
 			isa = PBXGroup;
 			children = (
 				0000000000000000000000A2 /* GIA.app */,
+				0000000000000000000000B1 /* GIAUnitTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -534,6 +564,7 @@
 			isa = PBXGroup;
 			children = (
 				000000000000000000000130 /* GIAVoiceVisualState.swift */,
+				000000000000000000000191 /* GIAVoiceTurnPolicy.swift */,
 				000000000000000000000184 /* SpeechActivityDetector.swift */,
 				000000000000000000000185 /* SpeechEndpointRules.swift */,
 				000000000000000000000142 /* VoiceRecognitionRules.swift */,
@@ -545,6 +576,7 @@
 			isa = PBXGroup;
 			children = (
 				00000000000000000000016A /* GIAResponseCoordinator.swift */,
+				000000000000000000000192 /* GIASpokenConversationFlow.swift */,
 				000000000000000000000141 /* VoiceSessionCoordinator.swift */,
 			);
 			path = Services;
@@ -649,6 +681,16 @@
 			path = Services;
 			sourceTree = "<group>";
 		};
+		000000000000000000000430 /* GIAUnitTests */ = {
+			isa = PBXGroup;
+			children = (
+				000000000000000000000190 /* GIAConversationRegressionTests.swift */,
+				000000000000000000000193 /* GIASpokenConversationFlowTests.swift */,
+				000000000000000000000194 /* PlanWorkspacePresentationTests.swift */,
+			);
+			path = GIAUnitTests;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -669,6 +711,24 @@
 			productReference = 0000000000000000000000A2 /* GIA.app */;
 			productType = "com.apple.product-type.application";
 		};
+		0000000000000000000000B2 /* GIAUnitTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0000000000000000000000B8 /* Build configuration list for PBXNativeTarget "GIAUnitTests" */;
+			buildPhases = (
+				0000000000000000000000B3 /* Sources */,
+				0000000000000000000000B4 /* Frameworks */,
+				0000000000000000000000B5 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				000000000000000000000501 /* PBXTargetDependency */,
+			);
+			name = GIAUnitTests;
+			productName = GIAUnitTests;
+			productReference = 0000000000000000000000B1 /* GIAUnitTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -681,6 +741,10 @@
 				TargetAttributes = {
 					0000000000000000000000A1 = {
 						CreatedOnToolsVersion = 16.0;
+					};
+					0000000000000000000000B2 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = 0000000000000000000000A1;
 					};
 				};
 			};
@@ -698,11 +762,19 @@
 			projectRoot = "";
 			targets = (
 				0000000000000000000000A1 /* GIA */,
+				0000000000000000000000B2 /* GIAUnitTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		0000000000000000000000B5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		0000000000000000000000A7 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -714,6 +786,16 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		0000000000000000000000B3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				000000000000000000000290 /* GIAConversationRegressionTests.swift in Sources */,
+				000000000000000000000293 /* GIASpokenConversationFlowTests.swift in Sources */,
+				000000000000000000000294 /* PlanWorkspacePresentationTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		0000000000000000000000A6 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -743,6 +825,8 @@
 				00000000000000000000022E /* EarthRenderingConfiguration.swift in Sources */,
 				00000000000000000000022F /* GIAIdleMark.swift in Sources */,
 				000000000000000000000230 /* GIAVoiceVisualState.swift in Sources */,
+				000000000000000000000291 /* GIAVoiceTurnPolicy.swift in Sources */,
+				000000000000000000000292 /* GIASpokenConversationFlow.swift in Sources */,
 				000000000000000000000231 /* EarthVoiceShader.swift in Sources */,
 				000000000000000000000233 /* GIAActiveVoiceDisc.swift in Sources */,
 				000000000000000000000235 /* ProceduralStarfieldView.swift in Sources */,
@@ -952,6 +1036,40 @@
 			};
 			name = Release;
 		};
+		0000000000000000000000B6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.abhijandyala.GIAUnitTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/GIA.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/GIA";
+			};
+			name = Debug;
+		};
+		0000000000000000000000B7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.abhijandyala.GIAUnitTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/GIA.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/GIA";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -973,7 +1091,24 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		0000000000000000000000B8 /* Build configuration list for PBXNativeTarget "GIAUnitTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0000000000000000000000B6 /* Debug */,
+				0000000000000000000000B7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
+
+/* Begin PBXTargetDependency section */
+		000000000000000000000501 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 0000000000000000000000A1 /* GIA */;
+			targetProxy = 000000000000000000000500 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 	};
 	rootObject = 0000000000000000000000A0 /* Project object */;
 }

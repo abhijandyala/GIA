@@ -61,32 +61,55 @@ enum GIAAssistantPresentationState:
     static func resolve(
         phase: TripPlanningPhase,
         responseState: GIAResponseState,
+        voiceMode: VoiceSessionMode = .stopped,
         permissionDenied: Bool = false,
-        recognitionUnavailable: Bool = false
+        recognitionUnavailable: Bool = false,
+        discVisible: Bool = false
     ) -> GIAAssistantPresentationState {
-        if permissionDenied || recognitionUnavailable {
+        if permissionDenied {
             return .error
         }
+
+        let waitingForSpokenReply =
+            discVisible
+            && (
+                phase == .wakePhraseDetected
+                || phase == .listening
+                || phase == .transcribing
+                || phase == .needsClarification
+                || phase == .validating
+            )
+
         switch responseState {
         case .playing:
             return .speaking
         case .generating:
-            return .processing
+            return discVisible ? .speaking : .processing
         case .failed:
             return .error
         case .idle:
             break
         }
 
+        if recognitionUnavailable && !waitingForSpokenReply {
+            return .error
+        }
+
         switch phase {
         case .idle, .ready, .cancelled:
-            return .idle
+            return discVisible ? .listening : .idle
         case .wakePhraseDetected:
             return .wakeDetected
-        case .listening, .transcribing:
-            return .listening
-        case .validating, .needsClarification:
-            return .listening
+        case .listening, .transcribing, .needsClarification, .validating:
+            // The live disc should stay cyan Listening while G.I.A. is
+            // still in a talk turn. "Working on it" is for Plan search,
+            // not the speak-to-listen handoff.
+            if waitingForSpokenReply {
+                return .listening
+            }
+            return voiceMode == .requestTranscription
+                ? .listening
+                : .processing
         case
             .searching,
             .comparing,

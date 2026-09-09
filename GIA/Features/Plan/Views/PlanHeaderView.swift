@@ -3,244 +3,241 @@ import SwiftUI
 struct PlanHeaderView: View {
     let request: TripRequest
     let phase: TripPlanningPhase
+    let statusText: String?
     let isProcessing: Bool
-    var phaseTitleOverride: String? = nil
+    let canCancel: Bool
+    let jumpAnchors: [PlanJumpAnchor]
+    let showsAskGIA: Bool
+    let isWaitingForAnswer: Bool
     let onSelectMetric: (PlanContextMetric.Kind) -> Void
+    let onJump: (PlanJumpAnchor) -> Void
+    let onNewRequest: () -> Void
+    let onCancel: () -> Void
+    let onAskGIA: () -> Void
 
-    @Environment(\.dynamicTypeSize)
-    private var dynamicTypeSize
+    private var metrics: [PlanContextMetric] {
+        PlanPresentationBuilder.contextMetrics(for: request)
+    }
 
     var body: some View {
-        VStack(spacing: 20) {
-            headerLayout
-                .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+        VStack(alignment: .leading, spacing: 12) {
+            titleRow
+            tripStrip
 
-            TripRequestPanel(
-                request: request,
-                onSelectMetric: onSelectMetric
-            )
+            if let statusText, showsStatus {
+                statusRow(statusText)
+            }
+
+            if !jumpAnchors.isEmpty {
+                jumpChips
+            }
+
+            if showsAskGIA {
+                askGIAButton
+            }
+        }
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+    }
+
+    private var showsStatus: Bool {
+        guard statusText != nil else { return false }
+        switch phase {
+        case .ready, .cancelled, .idle:
+            return isProcessing
+        default:
+            return true
         }
     }
 
-    @ViewBuilder
-    private var headerLayout: some View {
-        if dynamicTypeSize.isAccessibilitySize {
-            VStack(alignment: .leading, spacing: 15) {
-                HStack(spacing: 14) {
-                    planningIndicator
-                    planLabel
+    private var titleRow: some View {
+        HStack(spacing: 10) {
+            Text("Plan")
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(GIAColor.primaryText)
+                .accessibilityAddTraits(.isHeader)
 
-                    Spacer(minLength: 8)
+            Spacer(minLength: 8)
 
-                    phaseGlyph
-                }
+            PlanLanguageMenu()
 
-                phaseTitle
-            }
-        } else {
-            HStack(spacing: 14) {
-                planningIndicator
-
-                VStack(alignment: .leading, spacing: 5) {
-                    planLabel
-                    phaseTitle
-                }
-
-                Spacer(minLength: 10)
-
-                phaseGlyph
-            }
-        }
-    }
-
-    private var planningIndicator: some View {
-        GIAPlanningIndicator(
-            isActive:
-                isProcessing
-                && PlanPhasePresentation.isActive(phase)
-        )
-        .frame(width: 54, height: 54)
-    }
-
-    private var planLabel: some View {
-        Text("PLAN SYNTHESIS")
-            .font(.caption2.weight(.semibold))
-            .tracking(2.4)
-            .foregroundStyle(
-                GIAColor.primaryText.opacity(0.58)
-            )
-    }
-
-    private var phaseTitle: some View {
-        Text(
-            phaseTitleOverride
-            ?? PlanPhasePresentation.title(for: phase)
-        )
-            .font(
-                dynamicTypeSize.isAccessibilitySize
-                    ? .title2.weight(.medium)
-                    : .headline.weight(.medium)
-            )
-            .foregroundStyle(GIAColor.primaryText)
-            .fixedSize(horizontal: false, vertical: true)
-            .accessibilityAddTraits(.isHeader)
-    }
-
-    @ViewBuilder
-    private var phaseGlyph: some View {
-        if
-            isProcessing,
-            PlanPhasePresentation.isActive(phase)
-        {
-            HStack(spacing: 6) {
-                Circle()
-                    .fill(GIAColor.intelligenceAccent)
-                    .frame(width: 5, height: 5)
-                    .shadow(
-                        color: GIAColor.intelligenceAccent.opacity(0.8),
-                        radius: 4
+            Menu {
+                Button("New trip", action: onNewRequest)
+                if canCancel {
+                    Button(
+                        "Cancel planning",
+                        role: .destructive,
+                        action: onCancel
                     )
+                }
+            } label: {
+                Image(systemName: "ellipsis.circle")
+                    .font(.system(size: 20, weight: .regular))
+                    .foregroundStyle(GIAColor.primaryText)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .accessibilityLabel("Plan actions")
+            .accessibilityIdentifier("plan.actions")
+        }
+    }
 
-                Text("ACTIVE")
-                    .font(.caption2.weight(.semibold))
-                    .tracking(1.4)
+    private var tripStrip: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 8) {
+                ForEach(metrics) { metric in
+                    tripChip(metric)
+                }
+            }
+
+            VStack(spacing: 8) {
+                HStack(spacing: 8) {
+                    ForEach(metrics.prefix(2)) { metric in
+                        tripChip(metric)
+                    }
+                }
+                HStack(spacing: 8) {
+                    ForEach(metrics.suffix(2)) { metric in
+                        tripChip(metric)
+                    }
+                }
+            }
+        }
+    }
+
+    private func tripChip(_ metric: PlanContextMetric) -> some View {
+        Button {
+            onSelectMetric(metric.kind)
+        } label: {
+            Text(metric.value)
+                .font(.caption.weight(.medium))
+                .foregroundStyle(
+                    metric.isResolved
+                        ? GIAColor.primaryText
+                        : GIAColor.intelligenceAccent
+                )
+                .lineLimit(1)
+                .minimumScaleFactor(0.82)
+                .padding(.horizontal, 10)
+                .frame(maxWidth: .infinity)
+                .frame(minHeight: 36)
+                .background {
+                    Capsule(style: .continuous)
+                        .fill(GIAColor.primaryText.opacity(0.055))
+                }
+                .overlay {
+                    Capsule(style: .continuous)
+                        .stroke(
+                            metric.isResolved
+                                ? GIAColor.subtleStroke
+                                : GIAColor.intelligenceAccent.opacity(0.42),
+                            lineWidth: 0.7
+                        )
+                }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(metric.title)
+        .accessibilityValue(metric.value)
+        .accessibilityHint("Double tap to edit")
+        .accessibilityIdentifier("plan.strip.\(metric.kind.rawValue)")
+    }
+
+    private func statusRow(_ text: String) -> some View {
+        HStack(spacing: 10) {
+            if isProcessing {
+                ProgressView()
+                    .controlSize(.small)
+                    .tint(GIAColor.intelligenceAccent)
+            }
+
+            Text(text)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(GIAColor.primaryText)
+                .lineLimit(2)
+
+            Spacer(minLength: 8)
+
+            if canCancel {
+                Button("Cancel", action: onCancel)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(GIAColor.secondaryText)
+                    .frame(minHeight: 44)
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Cancel planning request")
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private var jumpChips: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(jumpAnchors) { anchor in
+                    Button {
+                        onJump(anchor)
+                    } label: {
+                        Text(anchor.title)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(GIAColor.primaryText)
+                            .padding(.horizontal, 12)
+                            .frame(minHeight: 36)
+                            .background {
+                                Capsule(style: .continuous)
+                                    .fill(GIAColor.primaryText.opacity(0.08))
+                            }
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Jump to \(anchor.title)")
+                    .accessibilityIdentifier("plan.jump.\(anchor.rawValue)")
+                }
+            }
+        }
+    }
+
+    private var askGIAButton: some View {
+        Button(action: onAskGIA) {
+            HStack(spacing: 10) {
+                Image(
+                    systemName: isWaitingForAnswer
+                        ? "waveform"
+                        : "plus.forwardslash.minus"
+                )
+                .font(.system(size: 14, weight: .semibold))
+
+                Text(
+                    isWaitingForAnswer
+                        ? "Answer G.I.A."
+                        : "Add or change"
+                )
+                .font(.subheadline.weight(.semibold))
+
+                Spacer(minLength: 8)
+
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(GIAColor.secondaryText)
             }
             .foregroundStyle(GIAColor.intelligenceAccent)
-            .padding(.horizontal, 10)
-            .frame(minHeight: 30)
+            .padding(.horizontal, 16)
+            .frame(maxWidth: .infinity, minHeight: 48)
             .background {
                 Capsule(style: .continuous)
-                    .fill(
-                        GIAColor.intelligenceAccent.opacity(0.08)
-                    )
+                    .fill(GIAColor.intelligenceAccent.opacity(0.10))
             }
             .overlay {
                 Capsule(style: .continuous)
                     .stroke(
-                        GIAColor.intelligenceAccent.opacity(0.24),
-                        lineWidth: 0.7
+                        GIAColor.intelligenceAccent.opacity(0.28),
+                        lineWidth: 0.8
                     )
             }
-            .accessibilityLabel("Planning active")
-        }
-    }
-}
-
-private struct TripRequestPanel: View {
-    let request: TripRequest
-    let onSelectMetric: (PlanContextMetric.Kind) -> Void
-
-    @Environment(\.dynamicTypeSize)
-    private var dynamicTypeSize
-
-    private var columns: [GridItem] {
-        if dynamicTypeSize.isAccessibilitySize {
-            return [GridItem(.flexible())]
-        }
-        return [
-            GridItem(.flexible(), spacing: 10),
-            GridItem(.flexible(), spacing: 10)
-        ]
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 17) {
-            Text("REQUEST")
-                .font(.caption2.weight(.semibold))
-                .tracking(2.2)
-                .foregroundStyle(
-                    GIAColor.primaryText.opacity(0.48)
-                )
-
-            if let transcript = request.rawTranscript {
-                Text(transcript)
-                    .font(
-                        .system(
-                            .title3,
-                            design: .rounded,
-                            weight: .light
-                        )
-                    )
-                    .lineSpacing(3)
-                    .foregroundStyle(GIAColor.primaryText)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-
-            Rectangle()
-                .fill(GIAColor.subtleStroke)
-                .frame(height: 0.6)
-
-            LazyVGrid(columns: columns, spacing: 14) {
-                ForEach(
-                    PlanPresentationBuilder.contextMetrics(for: request)
-                ) { metric in
-                    PlanContextMetricView(
-                        metric: metric,
-                        action: {
-                            onSelectMetric(metric.kind)
-                        }
-                    )
-                }
-            }
-
-        }
-        .padding(20)
-        .planSurface(cornerRadius: 24)
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("Trip request")
-    }
-}
-
-private struct PlanContextMetricView: View {
-    let metric: PlanContextMetric
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            VStack(alignment: .leading, spacing: 5) {
-                Text(metric.title.uppercased())
-                    .font(.caption2.weight(.medium))
-                    .tracking(1.3)
-                    .foregroundStyle(
-                        GIAColor.primaryText.opacity(0.42)
-                    )
-
-                HStack(spacing: 6) {
-                    Circle()
-                        .fill(
-                            GIAColor.intelligenceAccent.opacity(
-                                metric.isResolved ? 0.72 : 1
-                            )
-                        )
-                        .frame(width: 4, height: 4)
-                        .shadow(
-                            color:
-                                metric.isResolved
-                                ? .clear
-                                : GIAColor.intelligenceAccent,
-                            radius: 3
-                        )
-
-                    Text(metric.value)
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(
-                            metric.isResolved
-                                ? GIAColor.primaryText
-                                : GIAColor.intelligenceAccent
-                        )
-                        .lineLimit(2)
-                        .minimumScaleFactor(0.82)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(
-            "\(metric.title), \(metric.value)"
+        .accessibilityIdentifier("plan.addOrChange")
+        .accessibilityHint(
+            isWaitingForAnswer
+                ? "Returns to Map so you can answer G.I.A."
+                : "Returns to Map to add or change this trip"
         )
-        .accessibilityHint("Double tap to edit")
     }
 }
 
@@ -253,13 +250,23 @@ struct PlanHeaderView_Previews: PreviewProvider {
                         "Plan seven days in Lisbon for four travelers "
                         + "under six thousand dollars."
                 ),
-                phase: .validating,
+                phase: .searching,
+                statusText: "Finding travel options",
                 isProcessing: true,
-                onSelectMetric: { _ in }
+                canCancel: true,
+                jumpAnchors: [.flights, .stay, .budget],
+                showsAskGIA: true,
+                isWaitingForAnswer: false,
+                onSelectMetric: { _ in },
+                onJump: { _ in },
+                onNewRequest: { },
+                onCancel: { },
+                onAskGIA: { }
             )
             .padding(22)
         }
         .background(GIAColor.canvas)
+        .environment(PlanTranslationCoordinator(service: nil))
         .preferredColorScheme(.dark)
     }
 }

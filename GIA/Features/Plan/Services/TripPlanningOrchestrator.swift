@@ -50,8 +50,8 @@ final class TripPlanningOrchestrator {
     private static var defaultStrictProviderFailures: Bool {
         #if DEBUG
         ProcessInfo.processInfo.environment[
-            "GIA_DEBUG_ALLOW_PROVIDER_FALLBACKS"
-        ] != "1"
+            "GIA_DEBUG_STRICT_PROVIDER_FAILURES"
+        ] == "1"
         #else
         false
         #endif

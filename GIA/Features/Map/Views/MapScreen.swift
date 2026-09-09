@@ -1,10 +1,5 @@
 import SwiftUI
 
-private enum GIAClarificationTurn: Equatable {
-    case required(TripClarificationField)
-    case optionalPreferences
-}
-
 struct MapScreen: View {
     let isActive: Bool
 
@@ -54,6 +49,8 @@ struct MapScreen: View {
     @State private var accumulatedSpokenRequest = ""
     @State private var conversationMemory = GIAConversationMemory()
     @State private var listeningMutedUntil: TimeInterval = 0
+    @State private var pendingCompletedTranscript: String?
+    @State private var listeningRecoveryTask: Task<Void, Never>?
     @State private var isLowPowerModeEnabled =
         ProcessInfo.processInfo.isLowPowerModeEnabled
 
@@ -74,8 +71,14 @@ struct MapScreen: View {
                     onActivate: toggleAssistant
                 )
                 .offset(y: 15)
-                .opacity(isVoiceDiscVisible ? 0 : 1)
-                .allowsHitTesting(!isVoiceDiscVisible)
+                .opacity(
+                    isVoiceDiscVisible || isAssistantActive
+                        ? 0
+                        : 1
+                )
+                .allowsHitTesting(
+                    !isVoiceDiscVisible && !isAssistantActive
+                )
                 .zIndex(0)
 
                 EarthSceneView(
@@ -192,7 +195,11 @@ struct MapScreen: View {
                     !isReplyModePickerPresented
                 {
                     VStack(alignment: .leading, spacing: 0) {
-                        if let voiceFailureMessage {
+                        if
+                            let voiceFailureMessage,
+                            responseCoordinator.state != .playing,
+                            responseCoordinator.state != .generating
+                        {
                             VoiceAccessBanner(
                                 message: voiceFailureMessage,
                                 onRetry:
@@ -296,50 +303,11 @@ struct MapScreen: View {
             ) { _, transcriptionSequence in
                 guard
                     transcriptionSequence > 0,
-                    !isHearingOwnPlayback,
                     let transcript = voiceSession.completedTranscript
                 else {
                     return
                 }
-
-                let trimmed = transcript.trimmingCharacters(
-                    in: .whitespacesAndNewlines
-                )
-                if trimmed.isEmpty {
-                    Task { await keepListeningQuietly() }
-                    return
-                }
-
-                if tripPlanningSession.phase == .listening {
-                    try? tripPlanningSession.beginTranscribing()
-                }
-                guard tripPlanningSession.phase == .transcribing else {
-                    return
-                }
-
-                if clarificationTurn != nil {
-                    handleClarificationTranscript(transcript)
-                    return
-                }
-
-                if VoiceRecognitionRules.isStopCommand(transcript) {
-                    handleStopCommand()
-                    return
-                }
-
-                if isFollowUpRequest {
-                    handleFollowUpTranscript(transcript)
-                    return
-                }
-
-                accumulatedSpokenRequest =
-                    VoiceRecognitionRules.appendingSpokenRequest(
-                        existing: accumulatedSpokenRequest,
-                        incoming: trimmed
-                    )
-                submitOrContinueInitialRequest(
-                    accumulatedSpokenRequest
-                )
+                handleCompletedUserTranscript(transcript)
             }
             .onChange(
                 of: voiceSession.failureSequence
@@ -446,14 +414,28 @@ struct MapScreen: View {
             .onChange(of: responseCoordinator.state) { _, state in
                 switch state {
                 case .generating, .playing:
+                    listeningRecoveryTask?.cancel()
                     voiceSession.pauseForSpeechPlayback()
                 case .idle, .failed:
-                    if shouldArmWakePhrase {
-                        startWakePhraseListeningIfPossible()
+                    if responseCoordinator.isHoldingConversationTurn {
+                        return
                     }
+                    recoverListeningOrWakeAfterPlayback()
                 }
             }
             .onAppear(perform: runDebugVoiceDemoIfRequested)
+            .onReceive(
+                NotificationCenter.default.publisher(
+                    for: .giaDebugTranscriptRequested
+                )
+            ) { notification in
+                #if DEBUG
+                guard let transcript = notification.object as? String else {
+                    return
+                }
+                runDebugTranscriptInjection(transcript)
+                #endif
+            }
             .onReceive(
                 NotificationCenter.default.publisher(
                     for:
@@ -533,27 +515,17 @@ struct MapScreen: View {
         if isReturningToWorld {
             return true
         }
-        return !(
-            isVoiceDiscVisible
-                && voiceDiscRevealProgress >= 0.98
-        )
+        return !isVoiceDiscVisible
     }
 
     private var earthSceneOpacity: Double {
         if isReturningToWorld {
             return 1
         }
-        guard isVoiceDiscVisible else { return 1 }
-        let progress = min(
-            max(Double(voiceDiscRevealProgress), 0),
-            1
-        )
-        let fadeStart = 0.78
-        guard progress > fadeStart else { return 1 }
-        return max(
-            0,
-            1 - ((progress - fadeStart) / (1 - fadeStart))
-        )
+        if isVoiceDiscVisible {
+            return 0
+        }
+        return 1
     }
 
     private var isHearingOwnPlayback: Bool {
@@ -568,9 +540,11 @@ struct MapScreen: View {
         GIAAssistantPresentationState.resolve(
             phase: tripPlanningSession.phase,
             responseState: responseCoordinator.state,
+            voiceMode: voiceSession.mode,
             permissionDenied: voiceSession.permissionDenied,
             recognitionUnavailable:
-                voiceSession.recognitionUnavailable
+                voiceSession.recognitionUnavailable,
+            discVisible: isVoiceDiscVisible && !isReturningToWorld
         )
     }
 
@@ -696,10 +670,11 @@ struct MapScreen: View {
                     }
                 } label: {
                     Label(
-                        hasActiveTripRequest
+                        hasActiveTripRequest && !isVoiceDiscVisible
                             ? "ADD / CHANGE"
                             : "TYPE",
-                        systemImage: hasActiveTripRequest
+                        systemImage:
+                            hasActiveTripRequest && !isVoiceDiscVisible
                             ? "plus.forwardslash.minus"
                             : "keyboard"
                     )
@@ -1018,8 +993,20 @@ struct MapScreen: View {
         )
     }
 
+    private func startVoiceBackchannel(for utterance: String) {
+        guard !usesTypedInput else { return }
+        let trimmed = utterance.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        guard !trimmed.isEmpty else { return }
+        responseCoordinator.beginHeldTurn()
+        let phrase = GIAConversationBackchannel.phrase(for: trimmed)
+        Task {
+            await responseCoordinator.playBackchannel(phrase)
+        }
+    }
+
     private func deliverPhrase(_ phrase: GIAResponsePhrase) async {
-        #if DEBUG
         await deliverGeneratedReply(
             to: conversationContext(
                 for: TripRequestInterpretation(
@@ -1030,14 +1017,9 @@ struct MapScreen: View {
                 ),
                 intent: phraseConversationIntent(phrase),
                 extraFacts: phrasePromptFacts(phrase)
-            )
+            ),
+            fallback: GIAConversationFallback.response(for: phrase)
         )
-        #else
-        await deliverCannedReply(
-            GIAConversationFallback.response(for: phrase),
-            cachedPhrase: phrase
-        )
-        #endif
     }
 
     private func phraseConversationIntent(
@@ -1069,6 +1051,7 @@ struct MapScreen: View {
             ]
         case .followUpPrompt:
             [
+                "Conversation mode: editing an existing trip.",
                 "Ask what they want to add, change, or remove on this trip. If they name a new destination, treat that as the change."
             ]
         case .keepGoing:
@@ -1147,8 +1130,16 @@ struct MapScreen: View {
         if tripPlanningSession.phase == .failed {
             tripPlanningSession.clearCurrentTrip()
             activateAssistant(source: .manual)
-        } else {
-            Task {
+            return
+        }
+        Task {
+            if GIAVoiceTurnPolicy.needsUserReply(
+                phase: tripPlanningSession.phase,
+                clarificationTurnActive: clarificationTurn != nil,
+                isFollowUpRequest: isFollowUpRequest
+            ) {
+                await resumeConversationListening()
+            } else {
                 await voiceSession.startWakePhraseListening()
             }
         }
@@ -1163,6 +1154,7 @@ struct MapScreen: View {
         initialGreetingFallbackTask?.cancel()
         goodbyeFallbackTask?.cancel()
         demoFallbackTask?.cancel()
+        listeningRecoveryTask?.cancel()
         planningOrchestrator.cancel()
         responseCoordinator.stop()
         isPlanHandoffPending = false
@@ -1194,15 +1186,35 @@ struct MapScreen: View {
     ) {
         guard
             appState.applicationActivity == .active,
-            !isVoiceCaptureInProgress,
-            !isReturningToWorld,
-            !isReplyModePickerPresented
+            !GIAVoiceTurnPolicy.shouldBlockNewWake(
+                phase: tripPlanningSession.phase,
+                voiceMode: voiceSession.mode,
+                isReturningToWorld: isReturningToWorld,
+                isReplyModePickerPresented: isReplyModePickerPresented,
+                isSpeakingOrGenerating:
+                    responseCoordinator.state == .generating
+                    || responseCoordinator.state == .playing
+            )
         else {
             return
         }
 
         if usesTypedInput {
             closeTypedConversation()
+        }
+
+        if
+            !continuingWakeCapture,
+            GIAVoiceTurnPolicy.shouldRecoverConversationListening(
+                phase: tripPlanningSession.phase,
+                voiceMode: voiceSession.mode,
+                clarificationTurnActive: clarificationTurn != nil,
+                isFollowUpRequest: isFollowUpRequest,
+                isSpeakingOrGenerating: false
+            )
+        {
+            Task { await resumeConversationListening() }
+            return
         }
 
         let followsExistingPlan =
@@ -1239,6 +1251,7 @@ struct MapScreen: View {
         initialGreetingFallbackTask?.cancel()
         goodbyeFallbackTask?.cancel()
         demoFallbackTask?.cancel()
+        listeningRecoveryTask?.cancel()
         let keepMicrophone =
             continuingWakeCapture
             || voiceSession.mode == .requestTranscription
@@ -1337,6 +1350,12 @@ struct MapScreen: View {
             )
             startFocusedActivation()
         }
+
+        if !usesTypedInput {
+            Task {
+                await responseCoordinator.prefetchBackchannelAudio()
+            }
+        }
     }
 
     private func returnAssistantToWorld() {
@@ -1390,7 +1409,11 @@ struct MapScreen: View {
         earthSceneController.activate()
         activationTask?.cancel()
         activationTask = Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 320_000_000)
+            let zoomNanoseconds = UInt64(
+                EarthRenderingConfiguration.transformationDuration
+                    * 1_000_000_000
+            )
+            try? await Task.sleep(nanoseconds: zoomNanoseconds)
             guard
                 !Task.isCancelled,
                 isAssistantActive,
@@ -1400,9 +1423,7 @@ struct MapScreen: View {
                 return
             }
             isVoiceDiscVisible = true
-            withAnimation(voiceTransitionAnimation) {
-                voiceDiscRevealProgress = 1
-            }
+            voiceDiscRevealProgress = 1
         }
     }
 
@@ -1456,6 +1477,9 @@ struct MapScreen: View {
             "GIA_AUTORUN_PLAN_HANDOFF_TRANSCRIPT"
         ] != nil
             || ProcessInfo.processInfo.environment[
+                "GIA_DEBUG_INJECT_TRANSCRIPT"
+            ] != nil
+            || ProcessInfo.processInfo.environment[
                 "GIA_DEBUG_JUDGE_DEMO"
             ] == "1"
             || ProcessInfo.processInfo.environment[
@@ -1487,35 +1511,23 @@ struct MapScreen: View {
     }
 
     private var shouldArmWakePhrase: Bool {
-        guard
-            appState.applicationActivity == .active,
-            clarificationTurn == nil,
-            !isEndingConversation,
-            !usesTypedInput,
-            !isReplyModePickerPresented
-        else {
+        guard appState.applicationActivity == .active else {
             return false
         }
-        switch tripPlanningSession.phase {
-        case
-            .wakePhraseDetected,
-            .listening,
-            .transcribing,
-            .returning,
-            .cancelled:
-            return false
-        default:
-            return true
-        }
+        return GIAVoiceTurnPolicy.shouldArmWakePhrase(
+            phase: tripPlanningSession.phase,
+            clarificationTurnActive: clarificationTurn != nil,
+            isEndingConversation: isEndingConversation,
+            usesTypedInput: usesTypedInput,
+            isReplyModePickerPresented: isReplyModePickerPresented,
+            isSpeakingOrGenerating:
+                responseCoordinator.state == .generating
+                || responseCoordinator.state == .playing
+        )
     }
 
     private var isVoiceCaptureInProgress: Bool {
-        switch tripPlanningSession.phase {
-        case .wakePhraseDetected, .listening, .transcribing:
-            true
-        default:
-            false
-        }
+        GIAVoiceTurnPolicy.isMicrophoneCapturing(voiceSession.mode)
     }
 
     private func schedulePlanHandoff() {
@@ -1693,16 +1705,150 @@ struct MapScreen: View {
             else {
                 return
             }
+            // Stopping playback resumes the speech task's continuation. That
+            // task owns the single transition back to recognition; attempting
+            // it here as well used to cancel this watchdog from inside itself.
             responseCoordinator.stop(clearVisibleText: false)
-            await resumeListeningAfterPlayback()
         }
     }
 
     private func resumeListeningAfterPlayback() async {
         initialGreetingFallbackTask?.cancel()
+        await resumeConversationListening()
+    }
+
+    private func recoverListeningOrWakeAfterPlayback() {
+        listeningRecoveryTask?.cancel()
+        let action = GIAVoiceTurnPolicy.resumeActionAfterPlayback(
+            phase: tripPlanningSession.phase,
+            clarificationTurnActive: clarificationTurn != nil,
+            isFollowUpRequest: isFollowUpRequest,
+            usesTypedInput: usesTypedInput
+        )
+        switch action {
+        case .startRequestTranscription:
+            listeningRecoveryTask = Task {
+                try? await Task.sleep(nanoseconds: 480_000_000)
+                guard
+                    !Task.isCancelled,
+                    responseCoordinator.state == .idle
+                        || responseCoordinator.state == .failed
+                else {
+                    return
+                }
+                if GIAVoiceTurnPolicy.isMicrophoneCapturing(
+                    voiceSession.mode
+                ) {
+                    flushPendingCompletedTranscript()
+                    return
+                }
+                await resumeConversationListening()
+            }
+        case .startWakePhrase:
+            startWakePhraseListeningIfPossible()
+        case .none:
+            break
+        }
+    }
+
+    private func resumeConversationListening() async {
+        guard !usesTypedInput else { return }
         await waitForPlaybackEchoToSettle()
         guard !Task.isCancelled else { return }
+        await armMicrophoneForCurrentTurn()
+        flushPendingCompletedTranscript()
+    }
+
+    private func armMicrophoneForCurrentTurn() async {
+        if let turn = clarificationTurn {
+            await beginClarificationTranscription(
+                expectedTurn: turn,
+                waitForEcho: false
+            )
+            return
+        }
+        if isFollowUpRequest {
+            if tripPlanningSession.phase == .listening {
+                try? tripPlanningSession.beginTranscribing()
+            }
+            await voiceSession.startRequestTranscription()
+            return
+        }
         await beginInitialRequestTranscription()
+    }
+
+    private func handleCompletedUserTranscript(_ transcript: String) {
+        let trimmed = transcript.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        if trimmed.isEmpty {
+            Task { await keepListeningQuietly() }
+            return
+        }
+        if GIAVoiceTurnPolicy.shouldQueueTranscriptDuringPlayback(
+            isHearingOwnPlayback: isHearingOwnPlayback
+        ) {
+            pendingCompletedTranscript = trimmed
+            return
+        }
+        consumeUserTranscript(trimmed)
+    }
+
+    private func flushPendingCompletedTranscript() {
+        guard
+            let pending = pendingCompletedTranscript,
+            !isHearingOwnPlayback
+        else {
+            return
+        }
+        pendingCompletedTranscript = nil
+        consumeUserTranscript(pending)
+    }
+
+    private func consumeUserTranscript(_ transcript: String) {
+        let trimmed = transcript.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+        guard !trimmed.isEmpty else {
+            Task { await keepListeningQuietly() }
+            return
+        }
+
+        if tripPlanningSession.phase == .needsClarification {
+            try? tripPlanningSession.beginListening()
+        }
+        if tripPlanningSession.phase == .listening {
+            try? tripPlanningSession.beginTranscribing()
+        }
+        guard tripPlanningSession.phase == .transcribing else {
+            pendingCompletedTranscript = trimmed
+            Task { await resumeConversationListening() }
+            return
+        }
+
+        if clarificationTurn != nil {
+            handleClarificationTranscript(trimmed)
+            return
+        }
+
+        if VoiceRecognitionRules.isStopCommand(trimmed) {
+            handleStopCommand()
+            return
+        }
+
+        if isFollowUpRequest {
+            handleFollowUpTranscript(trimmed)
+            return
+        }
+
+        accumulatedSpokenRequest =
+            VoiceRecognitionRules.appendingSpokenRequest(
+                existing: accumulatedSpokenRequest,
+                incoming: trimmed
+            )
+        submitOrContinueInitialRequest(
+            accumulatedSpokenRequest
+        )
     }
 
     private func waitForPlaybackEchoToSettle() async {
@@ -1765,6 +1911,11 @@ struct MapScreen: View {
             try? await Task.sleep(nanoseconds: 250_000_000)
             await voiceSession.startRequestTranscription()
         }
+        if voiceSession.mode != .requestTranscription {
+            try? await Task.sleep(nanoseconds: 250_000_000)
+            await voiceSession.startRequestTranscription()
+        }
+        flushPendingCompletedTranscript()
     }
 
     private func continueInitialRequestListening() async {
@@ -1885,6 +2036,7 @@ struct MapScreen: View {
             transcript: travelTranscript(from: spoken)
         )
         accumulatedSpokenRequest = ""
+        startVoiceBackchannel(for: spoken)
         try? tripPlanningSession.beginValidation(
             request: interpretation.request
         )
@@ -2053,6 +2205,7 @@ struct MapScreen: View {
             return
         }
         voiceSession.pauseForSpeechPlayback()
+        startVoiceBackchannel(for: transcript)
         rememberUserUtterance(transcript)
         if case .cancelled =
             TripRequestInterpreter.interpretFollowUp(
@@ -2145,12 +2298,11 @@ struct MapScreen: View {
                 )
                 isFollowUpRequest = false
                 followUpReturnPhase = nil
-                if
-                    usesTypedInput,
-                    let field = nextClarificationField(in: issues)
-                {
+                if let field = nextClarificationField(in: issues) {
                     beginClarificationConversation(for: field)
-                    completeTypedTurn()
+                    if usesTypedInput {
+                        completeTypedTurn()
+                    }
                     return
                 }
             }
@@ -2285,6 +2437,24 @@ struct MapScreen: View {
                 retrying: retrying
             )
         )
+        let fallbackText = GIAHumanReplyComposer.clarificationQuestion(
+            for: field,
+            request: resolvedRequest,
+            userUtterance: userUtterance,
+            retrying: retrying,
+            alreadyComplimentedDestination:
+                conversationMemory.hasComplimented(
+                    GIAHumanReplyComposer.spokenDestination(
+                        in: resolvedRequest
+                    )
+                )
+        )
+        let fallback = GIAConversationResponse(
+            spokenText: fallbackText,
+            displayText: fallbackText,
+            intent: .clarificationNeeded,
+            shouldContinueListening: true
+        )
         rememberUserUtterance(userUtterance)
         conversationMemory.markAsked(
             askedFieldName(for: .required(field))
@@ -2295,7 +2465,8 @@ struct MapScreen: View {
         goodbyeFallbackTask?.cancel()
         speechTask = Task {
             await deliverGeneratedReply(
-                to: context
+                to: context,
+                fallback: fallback
             )
             rememberAssistantReply(from: resolvedRequest)
             clarificationPromptText =
@@ -2333,7 +2504,7 @@ struct MapScreen: View {
         goodbyeFallbackTask?.cancel()
         speechTask = Task {
             var extraFacts = [
-                "Ask if they want to add anything else or say that's it."
+                "Ask one short follow-up about departure city, budget, flights, hotels, or things to do, then say they can reply that's it. Keep the whole reply under 140 characters."
             ]
             if retrying {
                 extraFacts = [
@@ -2356,10 +2527,30 @@ struct MapScreen: View {
                 intent: .clarificationNeeded,
                 extraFacts: extraFacts
             )
+            let fallbackText =
+                GIAHumanReplyComposer.optionalPreferenceQuestion(
+                    omittedExamples: omitted,
+                    request: request,
+                    userUtterance: userUtterance,
+                    retrying: retrying,
+                    alreadyComplimentedDestination:
+                        conversationMemory.hasComplimented(
+                            GIAHumanReplyComposer.spokenDestination(
+                                in: request
+                            )
+                        )
+                )
+            let fallback = GIAConversationResponse(
+                spokenText: fallbackText,
+                displayText: fallbackText,
+                intent: .clarificationNeeded,
+                shouldContinueListening: true
+            )
             rememberUserUtterance(userUtterance)
             conversationMemory.markAsked("preferences")
             await deliverGeneratedReply(
-                to: context
+                to: context,
+                fallback: fallback
             )
             rememberAssistantReply(from: request)
             clarificationPromptText =
@@ -2462,35 +2653,44 @@ struct MapScreen: View {
             else {
                 return
             }
+            // The suspended speech task continues after stop() and performs
+            // the microphone handoff exactly once.
             responseCoordinator.stop(clearVisibleText: false)
-            await beginClarificationTranscription(
-                expectedTurn: expectedTurn
-            )
         }
     }
 
     private func beginClarificationTranscription(
-        expectedTurn: GIAClarificationTurn
+        expectedTurn: GIAClarificationTurn,
+        waitForEcho: Bool = true
     ) async {
         guard !usesTypedInput else { return }
         clarificationFallbackTask?.cancel()
         initialGreetingFallbackTask?.cancel()
         goodbyeFallbackTask?.cancel()
-        await waitForPlaybackEchoToSettle()
+        if waitForEcho {
+            await waitForPlaybackEchoToSettle()
+        }
         guard
             !Task.isCancelled,
             clarificationTurn == expectedTurn,
             tripPlanningSession.phase == .needsClarification
+                || tripPlanningSession.phase == .listening
+                || tripPlanningSession.phase == .transcribing
         else {
             return
         }
         do {
-            try tripPlanningSession.beginListening()
-            try tripPlanningSession.beginTranscribing()
+            if tripPlanningSession.phase == .needsClarification {
+                try tripPlanningSession.beginListening()
+            }
+            if tripPlanningSession.phase == .listening {
+                try tripPlanningSession.beginTranscribing()
+            }
         } catch {
             return
         }
         await voiceSession.startRequestTranscription()
+        flushPendingCompletedTranscript()
     }
 
     private func handleClarificationTranscript(
@@ -2513,6 +2713,7 @@ struct MapScreen: View {
         }
 
         voiceSession.pauseForSpeechPlayback()
+        startVoiceBackchannel(for: transcript)
         clarificationFallbackTask?.cancel()
         initialGreetingFallbackTask?.cancel()
         goodbyeFallbackTask?.cancel()
@@ -2613,92 +2814,33 @@ struct MapScreen: View {
                 timeoutNanoseconds: interpretTimeout
             )
         }
-        let raced = await raceInterpretation(
-            interpretTask,
-            timeoutNanoseconds: usesTypedInput
-                ? 2_400_000_000
-                : 450_000_000
-        )
-
-        switch raced {
-        case .completed(let reply):
-            await applyRemoteClarificationReply(
-                reply,
-                turn: turn,
-                currentRequest: currentRequest,
-                transcript: transcript
-            )
-        case .timedOut:
-            interpretTask.cancel()
-            continueClarification(
-                with: currentRequest,
-                userUtterance: transcript
-            )
-        }
-    }
-
-    private func applyRemoteClarificationReply(
-        _ reply: TripReplyInterpretation?,
-        turn: GIAClarificationTurn,
-        currentRequest: TripRequest,
-        transcript: String
-    ) async {
-        guard let reply else {
-            continueClarification(
-                with: currentRequest,
-                userUtterance: transcript
-            )
-            return
-        }
-        if !reply.isUnderstood {
-            await askWhatTheUserMeant(
-                spokenText: reply.spokenText,
-                turn: turn,
-                isFollowUp: false
-            )
-            return
-        }
-        if reply.hasUsablePatch {
-            clarificationRetryCount = 0
-            presenceCheckCount = 0
-            continueClarification(
-                with: TripRequestInterpreter.applying(
-                    reply,
-                    to: currentRequest
-                ),
-                userUtterance: transcript
-            )
-            return
-        }
         continueClarification(
             with: currentRequest,
             userUtterance: transcript
         )
+        let reply = await interpretTask.value
+        applySilentRemotePatch(reply, to: currentRequest)
     }
 
-    private enum InterpretationRace: Sendable {
-        case completed(TripReplyInterpretation?)
-        case timedOut
-    }
-
-    private func raceInterpretation(
-        _ task: Task<TripReplyInterpretation?, Never>,
-        timeoutNanoseconds: UInt64
-    ) async -> InterpretationRace {
-        await withTaskGroup(of: InterpretationRace.self) { group in
-            group.addTask {
-                .completed(await task.value)
-            }
-            group.addTask {
-                try? await Task.sleep(
-                    nanoseconds: timeoutNanoseconds
-                )
-                return .timedOut
-            }
-            let first = await group.next() ?? .timedOut
-            group.cancelAll()
-            return first
+    private func applySilentRemotePatch(
+        _ reply: TripReplyInterpretation?,
+        to currentRequest: TripRequest
+    ) {
+        guard
+            let reply,
+            reply.isUnderstood,
+            reply.hasUsablePatch
+        else {
+            return
         }
+        let base =
+            tripPlanningSession.currentRequest ?? currentRequest
+        tripPlanningSession.mergeLiveRequest(
+            TripRequestInterpreter.applying(
+                reply,
+                to: base
+            )
+        )
     }
 
     private func interpretedReply(
@@ -2949,17 +3091,9 @@ struct MapScreen: View {
     private func nextClarificationField(
         in issues: [RequestValidationIssue]
     ) -> TripClarificationField? {
-        let fields = Set(issues.map(\.field))
-        return [
-            .destination,
-            .dates,
-            .travelers,
-            .budget,
-            .origin,
-            .dietaryRequirements,
-            .accessibility,
-            .preferences
-        ].first { fields.contains($0) }
+        TripRequestInterpreter.preferredClarificationField(
+            in: issues
+        )
     }
 
     private func conversationContext(
@@ -3083,11 +3217,16 @@ struct MapScreen: View {
         }
         if retrying {
             return [
+                "Conversation mode: collecting trip details. Do not ask what to add, change, keep, or remove.",
                 question,
                 "Retry: ask the missing detail again. No compliment."
             ]
         }
-        return [question]
+        return [
+            "Conversation mode: collecting trip details. Do not ask what to add, change, keep, or remove.",
+            question,
+            "If User said already answers Ask next, do not re-ask that field. Acknowledge it and ask the next missing required field."
+        ]
     }
 
     private func submitTextRequest(_ text: String) {
@@ -3315,6 +3454,10 @@ struct MapScreen: View {
         }
     }
 
+    private var voiceDiscAppearAnimation: Animation {
+        .easeOut(duration: 0.28)
+    }
+
     private var voiceTransitionAnimation: Animation {
         .linear(
             duration:
@@ -3389,6 +3532,7 @@ struct MapScreen: View {
         case .idle:
             if
                 !responseCoordinator.visibleText.isEmpty,
+                !voiceSession.isUserSpeaking,
                 voiceSession.liveTranscript.isEmpty
             {
                 return (responseCoordinator.visibleText, true)
@@ -3397,6 +3541,7 @@ struct MapScreen: View {
 
         if
             clarificationTurn != nil,
+            !voiceSession.isUserSpeaking,
             voiceSession.liveTranscript.isEmpty,
             !clarificationPromptText.isEmpty
         {
@@ -3405,9 +3550,13 @@ struct MapScreen: View {
 
         #if DEBUG
         if
-            let transcript = ProcessInfo.processInfo.environment[
-                "GIA_AUTORUN_PLAN_HANDOFF_TRANSCRIPT"
-            ],
+            let transcript =
+                ProcessInfo.processInfo.environment[
+                    "GIA_DEBUG_INJECT_TRANSCRIPT"
+                ]
+                ?? ProcessInfo.processInfo.environment[
+                    "GIA_AUTORUN_PLAN_HANDOFF_TRANSCRIPT"
+                ],
             !transcript.isEmpty
         {
             return (transcript, false)
@@ -3489,19 +3638,26 @@ struct MapScreen: View {
         }
 
         if
-            let transcript = ProcessInfo.processInfo.environment[
-                "GIA_AUTORUN_PLAN_HANDOFF_TRANSCRIPT"
-            ],
+            let transcript =
+                ProcessInfo.processInfo.environment[
+                    "GIA_DEBUG_INJECT_TRANSCRIPT"
+                ]
+                ?? ProcessInfo.processInfo.environment[
+                    "GIA_AUTORUN_PLAN_HANDOFF_TRANSCRIPT"
+                ],
             !transcript.isEmpty
         {
             Task {
-                try? await Task.sleep(nanoseconds: 350_000_000)
-                guard
-                    appState.applicationActivity == .active
-                else {
-                    return
+                for _ in 0..<30 {
+                    if appState.applicationActivity == .active {
+                        runDebugTranscriptInjection(
+                            transcript,
+                            startsNewRequest: true
+                        )
+                        return
+                    }
+                    try? await Task.sleep(nanoseconds: 100_000_000)
                 }
-                runDebugPlanHandoff(transcript)
             }
             return
         }
@@ -3565,22 +3721,67 @@ struct MapScreen: View {
     }
 
     #if DEBUG
-    private func runDebugPlanHandoff(_ transcript: String) {
-        if tripPlanningSession.phase != .idle {
-            tripPlanningSession.resetForNewRequest()
-        }
-        try? tripPlanningSession.beginListening(source: .debug)
-        try? tripPlanningSession.beginTranscribing()
-        let interpretation = TripRequestInterpreter.interpret(
-            transcript: transcript
-        )
-        try? tripPlanningSession.beginValidation(
-            request: interpretation.request
-        )
-        if interpretation.requiresClarification {
-            try? tripPlanningSession.requestClarification(
-                for: interpretation.clarificationFields
+    private func runDebugTranscriptInjection(
+        _ transcript: String,
+        startsNewRequest: Bool = false
+    ) {
+        let continuesClarification =
+            clarificationTurn != nil
+            && (
+                tripPlanningSession.phase == .needsClarification
+                || tripPlanningSession.phase == .listening
+                || tripPlanningSession.phase == .transcribing
             )
+        let followsExistingPlan =
+            !startsNewRequest
+            && (
+                tripPlanningSession.phase == .ready
+                || tripPlanningSession.phase == .partiallyAvailable
+            )
+                && tripPlanningSession.currentRequest != nil
+
+        responseCoordinator.stop()
+        voiceSession.stop()
+        speechTask?.cancel()
+        clarificationFallbackTask?.cancel()
+        responseDeadlineTask?.cancel()
+
+        if followsExistingPlan {
+            followUpReturnPhase = tripPlanningSession.phase
+            isFollowUpRequest = true
+        } else if !continuesClarification {
+            if tripPlanningSession.phase != .idle {
+                tripPlanningSession.resetForNewRequest()
+            }
+            planningOrchestrator.reset()
+            conversationMemory.reset()
+            isFollowUpRequest = false
+            followUpReturnPhase = nil
+        }
+
+        do {
+            if continuesClarification {
+                switch tripPlanningSession.phase {
+                case .needsClarification:
+                    try tripPlanningSession.beginListening(source: .debug)
+                    try tripPlanningSession.beginTranscribing()
+                case .listening:
+                    try tripPlanningSession.beginTranscribing()
+                case .transcribing:
+                    break
+                default:
+                    return
+                }
+            } else {
+                try tripPlanningSession.beginListening(source: .debug)
+                try tripPlanningSession.beginTranscribing()
+            }
+        } catch {
+            return
+        }
+
+        if !appState.isMapSelected {
+            appState.select(.map)
         }
         earthSceneController.setFocusedPresentation(
             true,
@@ -3589,39 +3790,14 @@ struct MapScreen: View {
         earthSceneController.setActiveWithoutMotion(true)
         isVoiceDiscVisible = true
         voiceDiscRevealProgress = 1
-        if
-            interpretation.requiresClarification,
-            let field = nextClarificationField(
-                in: interpretation.issues
-            )
-        {
-            beginClarificationConversation(
-                for: field,
-                userUtterance: transcript
-            )
-            return
+        Task { @MainActor in
+            // Let the stopped playback state publish before the transcript.
+            // The production completion handler rejects microphone echo while
+            // speech is playing, so a same-run-loop injection would be
+            // correctly ignored as potential self-hearing.
+            await Task.yield()
+            voiceSession.injectCompletedTranscript(transcript)
         }
-        if ProcessInfo.processInfo.environment[
-            "GIA_DEBUG_CONVERSATION_HANDOFF"
-        ] == "1" {
-            beginSpokenHandoff(
-                conversationContext(
-                    for: interpretation,
-                    transcript: transcript,
-                    extraFacts: [
-                        "Confirm briefly that you have what you need. "
-                            + "Do not ask another question."
-                    ]
-                )
-            )
-        } else {
-            schedulePlanHandoff()
-        }
-        planningOrchestrator.start(
-            request: interpretation.request,
-            session: tripPlanningSession,
-            connectivity: connectivityMonitor.state
-        )
     }
 
     private func runDebugFollowUp(_ followUp: String) {

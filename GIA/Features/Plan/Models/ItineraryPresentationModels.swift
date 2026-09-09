@@ -12,7 +12,7 @@ struct ItineraryItemPresentation: Identifiable {
             TimeZone(identifier: item.timeZoneIdentifier)
             ?? .current
         formatter.timeStyle = .short
-        return "\(formatter.string(from: item.start))–"
+        return "\(formatter.string(from: item.start)) to "
             + formatter.string(from: item.end)
     }
 
@@ -59,11 +59,11 @@ struct ItineraryItemPresentation: Identifiable {
     var flexibilityLabel: String {
         switch item.flexibility {
         case .fixed:
-            "FIXED"
+            "Fixed"
         case .flexible:
-            "FLEXIBLE"
+            "Flexible"
         case .lockedByUser:
-            "LOCKED"
+            "Locked"
         }
     }
 

@@ -328,6 +328,13 @@ final class TripPlanningSession {
         }
     }
 
+    func mergeLiveRequest(_ request: TripRequest) {
+        guard currentRequest != nil else {
+            return
+        }
+        currentRequest = request
+    }
+
     func beginSearch() throws {
         guard currentRequest != nil else {
             throw TripPlanningTransitionError.missingRequest

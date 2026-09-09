@@ -10,6 +10,7 @@ struct HotelComparisonSection: View {
     @State private var comparisonIDs: Set<UUID> = []
     @State private var isDetailExpanded = false
     @State private var isComparisonPresented = false
+    @State private var showsMoreOptions = false
     @Environment(\.accessibilityReduceMotion)
     private var reduceMotion
 
@@ -46,6 +47,28 @@ struct HotelComparisonSection: View {
             }
 
             if presentations.count > 1 {
+                Button {
+                    withAnimation(
+                        reduceMotion
+                            ? .linear(duration: 0.01)
+                            : .easeOut(duration: 0.2)
+                    ) {
+                        showsMoreOptions.toggle()
+                    }
+                } label: {
+                    Text(
+                        showsMoreOptions
+                            ? "Hide other stays"
+                            : moreStayOptionsTitle
+                    )
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(GIAColor.intelligenceAccent)
+                    .frame(minHeight: 44)
+                }
+                .buttonStyle(.plain)
+            }
+
+            if showsMoreOptions, presentations.count > 1 {
                 alternatives
             }
 
@@ -54,9 +77,8 @@ struct HotelComparisonSection: View {
                     isComparisonPresented = true
                 } label: {
                     HStack {
-                        Text("COMPARE \(comparisonIDs.count) STAYS")
-                            .font(.caption.weight(.semibold))
-                            .tracking(1.5)
+                        Text("Compare \(comparisonIDs.count) stays")
+                            .font(.subheadline.weight(.semibold))
 
                         Spacer()
 
@@ -105,14 +127,15 @@ struct HotelComparisonSection: View {
     private var sectionHeader: some View {
         HStack(alignment: .firstTextBaseline) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("STAY OPTIONS")
-                    .font(.caption2.weight(.semibold))
-                    .tracking(2.1)
-                    .foregroundStyle(
-                        GIAColor.primaryText.opacity(0.48)
-                    )
+                Text("Stay")
+                    .font(.headline.weight(.medium))
+                    .foregroundStyle(GIAColor.primaryText)
 
-                Text("\(offers.count) sourced properties")
+                Text(
+                    offers.count == 1
+                        ? "1 option"
+                        : "\(offers.count) options"
+                )
                     .font(.caption)
                     .foregroundStyle(GIAColor.secondaryText)
             }
@@ -120,8 +143,7 @@ struct HotelComparisonSection: View {
             Spacer()
 
             Text(bookingStatusLabel)
-                .font(.system(size: 9, weight: .semibold))
-                .tracking(1.1)
+                .font(.caption.weight(.semibold))
                 .foregroundStyle(bookingStatusColor)
         }
     }
@@ -134,16 +156,23 @@ struct HotelComparisonSection: View {
         }
     }
 
+    private var moreStayOptionsTitle: String {
+        let extras = max(offers.count - 1, 0)
+        return extras == 1
+            ? "More options"
+            : "More options (\(extras))"
+    }
+
     private var bookingStatusLabel: String {
         switch selectedBooking?.status {
         case .demoConfirmed:
-            "DEMO CONFIRMED"
+            "Demo confirmed"
         case .confirmed:
-            "PROVIDER CONFIRMED"
+            "Booked"
         case .externalCheckoutRequired, .processing:
-            "CHECKOUT REQUIRED"
+            "Checkout needed"
         default:
-            "NO RESERVATION MADE"
+            "No booking yet"
         }
     }
 
@@ -162,11 +191,10 @@ struct HotelComparisonSection: View {
 
     private var alternatives: some View {
         VStack(alignment: .leading, spacing: 11) {
-            Text("ALTERNATIVES")
-                .font(.caption2.weight(.semibold))
-                .tracking(1.8)
+            Text("Other stays")
+                .font(.caption.weight(.semibold))
                 .foregroundStyle(
-                    GIAColor.primaryText.opacity(0.38)
+                    GIAColor.primaryText.opacity(0.55)
                 )
 
             ScrollView(.horizontal, showsIndicators: false) {
@@ -222,6 +250,7 @@ struct HotelComparisonSection: View {
         comparisonIDs = Set(
             presentations.prefix(3).map(\.id)
         )
+        showsMoreOptions = true
         Task {
             try? await Task.sleep(nanoseconds: 350_000_000)
             isComparisonPresented = true
@@ -241,262 +270,102 @@ private struct FeaturedHotelCard: View {
     private var reduceMotion
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HotelHeroImage(hotel: hotel)
-                .frame(height: 154)
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
+                HotelHeroImage(hotel: hotel)
+                    .frame(width: 72, height: 72)
+                    .clipShape(
+                        RoundedRectangle(
+                            cornerRadius: 14,
+                            style: .continuous
+                        )
+                    )
 
-            VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    if let badge = hotel.primaryBadge {
-                        Text(badge)
-                            .font(.system(size: 9, weight: .semibold))
-                            .tracking(1.4)
-                            .foregroundStyle(
-                                GIAColor.intelligenceAccent
-                            )
-                    } else {
-                        Text(hotel.lodgingType.uppercased())
-                            .font(.system(size: 9, weight: .semibold))
-                            .tracking(1.4)
-                            .foregroundStyle(GIAColor.secondaryText)
-                    }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(hotel.offer.name)
+                        .font(.headline.weight(.medium))
+                        .foregroundStyle(GIAColor.primaryText)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
 
-                    Spacer()
+                    Text(hotel.locationLabel)
+                        .font(.caption)
+                        .foregroundStyle(GIAColor.secondaryText)
+                        .lineLimit(1)
 
-                    HotelSourcePill(label: hotel.sourceLabel)
-                }
-
-                Text(hotel.offer.name)
-                    .font(.title2.weight(.medium))
+                    Text(
+                        "\(hotel.ratingText)  ·  \(hotel.totalPrice)"
+                    )
+                    .font(.caption.weight(.medium))
                     .foregroundStyle(GIAColor.primaryText)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 13)
-
-                Label(
-                    hotel.locationLabel,
-                    systemImage: "location"
-                )
-                .font(.caption)
-                .foregroundStyle(GIAColor.secondaryText)
-                .padding(.top, 6)
-
-                HStack(spacing: 0) {
-                    HotelMetric(
-                        title: "RATING",
-                        value: hotel.ratingText
-                    )
-
-                    HotelMetric(
-                        title: "NIGHTLY",
-                        value: hotel.nightlyPrice
-                    )
-
-                    HotelMetric(
-                        title: "TOTAL",
-                        value: hotel.totalPrice
-                    )
-                }
-                .padding(.top, 22)
-
-                Text(hotel.reviewText)
-                    .font(.caption)
-                    .foregroundStyle(GIAColor.secondaryText)
-                    .padding(.top, 7)
-
-                if !hotel.amenityTitles.isEmpty {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 7) {
-                            ForEach(
-                                hotel.amenityTitles,
-                                id: \.self
-                            ) { amenity in
-                                Text(amenity)
-                                    .font(.caption2.weight(.medium))
-                                    .foregroundStyle(
-                                        GIAColor.primaryText.opacity(0.78)
-                                    )
-                                    .padding(.horizontal, 10)
-                                    .frame(minHeight: 29)
-                                    .background {
-                                        Capsule(style: .continuous)
-                                            .fill(
-                                                GIAColor.primaryText
-                                                    .opacity(0.055)
-                                            )
-                                    }
-                            }
-                        }
-                    }
-                    .padding(.top, 17)
                 }
 
-                Label(
-                    hotel.cancellationDescription,
-                    systemImage:
-                        hotel.offer.cancellationPolicy == nil
-                        ? "questionmark.circle"
-                        : "checkmark.circle"
-                )
-                .font(.caption)
-                .foregroundStyle(
-                    hotel.offer.cancellationPolicy == nil
-                        ? GIAColor.secondaryText
-                        : GIAColor.intelligenceAccent
-                )
-                .padding(.top, 16)
-
-                Text(hotel.taxDescription)
-                    .font(.caption)
-                    .foregroundStyle(GIAColor.secondaryText)
-                    .padding(.top, 6)
-
-                Button {
-                    withAnimation(
-                        reduceMotion
-                            ? .linear(duration: 0.01)
-                            : .easeInOut(duration: 0.22)
-                    ) {
-                        isDetailExpanded.toggle()
-                    }
-                } label: {
-                    HStack {
-                        Text(
-                            isDetailExpanded
-                                ? "HIDE DETAILS"
-                                : "VIEW DETAILS"
-                        )
-                        .font(.caption2.weight(.semibold))
-                        .tracking(1.3)
-
-                        Spacer()
-
-                        Image(
-                            systemName:
-                                isDetailExpanded
-                                ? "chevron.up"
-                                : "chevron.down"
-                        )
-                        .font(.caption2.weight(.semibold))
-                    }
-                    .foregroundStyle(GIAColor.secondaryText)
-                    .padding(.vertical, 15)
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(
-                    isDetailExpanded
-                        ? "Hide hotel details"
-                        : "View hotel details"
-                )
-                .padding(.top, 4)
-
-                if isDetailExpanded {
-                    HotelDetailView(hotel: hotel)
-                        .transition(
-                            .opacity.combined(with: .move(edge: .top))
-                        )
-                }
-
-                Rectangle()
-                    .fill(GIAColor.subtleStroke)
-                    .frame(height: 0.6)
-                    .padding(.bottom, 15)
-
-                actions
+                Spacer(minLength: 0)
             }
-            .padding(20)
+
+            if isDetailExpanded {
+                extraDetails
+                    .transition(
+                        .opacity.combined(with: .move(edge: .top))
+                    )
+            }
+
+            actions
         }
-        .clipShape(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-        )
-        .planSurface(cornerRadius: 24)
+        .padding(16)
+        .planSurface(cornerRadius: 22)
         .accessibilityElement(children: .contain)
         .accessibilityLabel(hotel.accessibilitySummary)
     }
 
-    private var actions: some View {
-        VStack(spacing: 10) {
-            HStack(spacing: 10) {
-                Button(action: onSelect) {
-                    Text(
-                        isSelected
-                            ? "REVIEW SELECTION"
-                            : "SELECT STAY"
-                    )
-                        .font(.caption2.weight(.semibold))
-                        .tracking(1.2)
-                        .foregroundStyle(
-                            isSelected
-                                ? GIAColor.intelligenceAccent
-                                : GIAColor.canvas
-                        )
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: 43)
-                        .background {
-                            Capsule(style: .continuous)
-                                .fill(
-                                    isSelected
-                                        ? GIAColor
-                                            .intelligenceAccent
-                                            .opacity(0.09)
-                                        : GIAColor.primaryText
-                                )
-                        }
-                        .overlay {
-                            Capsule(style: .continuous)
-                                .stroke(
-                                    isSelected
-                                        ? GIAColor
-                                            .intelligenceAccent
-                                            .opacity(0.42)
-                                        : .clear,
-                                    lineWidth: 0.8
-                                )
-                        }
-                }
-                .buttonStyle(.plain)
-
-                Button(action: onToggleComparison) {
-                    Image(
-                        systemName:
-                            isCompared
-                            ? "checkmark.circle.fill"
-                            : "plus.circle"
-                    )
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(
-                        isCompared
-                            ? GIAColor.intelligenceAccent
-                            : GIAColor.secondaryText
-                    )
-                    .frame(width: 44, height: 44)
-                    .background {
-                        Circle()
-                            .fill(GIAColor.primaryText.opacity(0.055))
-                    }
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(
-                    isCompared
-                        ? "Remove hotel from comparison"
-                        : "Add hotel to comparison"
-                )
+    @ViewBuilder
+    private var extraDetails: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if let badge = hotel.primaryBadge {
+                Text(badge)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(GIAColor.intelligenceAccent)
             }
+
+            Text("\(hotel.nightlyPrice) per night")
+                .font(.caption)
+                .foregroundStyle(GIAColor.secondaryText)
+
+            Text(hotel.reviewText)
+                .font(.caption)
+                .foregroundStyle(GIAColor.secondaryText)
+
+            Label(
+                hotel.cancellationDescription,
+                systemImage:
+                    hotel.offer.cancellationPolicy == nil
+                    ? "questionmark.circle"
+                    : "checkmark.circle"
+            )
+            .font(.caption)
+            .foregroundStyle(
+                hotel.offer.cancellationPolicy == nil
+                    ? GIAColor.secondaryText
+                    : GIAColor.intelligenceAccent
+            )
+
+            Text(hotel.taxDescription)
+                .font(.caption)
+                .foregroundStyle(GIAColor.secondaryText)
+
+            HotelDetailView(hotel: hotel)
 
             if let bookingURL = hotel.offer.bookingURL {
                 Link(destination: bookingURL) {
                     HStack {
-                        Text("VIEW WITH PROVIDER")
-                            .font(.caption2.weight(.semibold))
-                            .tracking(1.1)
-
+                        Text("Open booking site")
+                            .font(.caption.weight(.semibold))
                         Spacer()
-
                         Image(systemName: "arrow.up.right")
                     }
                     .foregroundStyle(GIAColor.secondaryText)
-                    .padding(.horizontal, 15)
-                    .frame(minHeight: 41)
+                    .padding(.horizontal, 14)
+                    .frame(minHeight: 40)
                     .background {
                         Capsule(style: .continuous)
                             .fill(GIAColor.primaryText.opacity(0.045))
@@ -506,6 +375,77 @@ private struct FeaturedHotelCard: View {
                     "Opens an external provider. No reservation has been made."
                 )
             }
+        }
+    }
+
+    private var actions: some View {
+        HStack(spacing: 12) {
+            Button {
+                withAnimation(
+                    reduceMotion
+                        ? .linear(duration: 0.01)
+                        : .easeInOut(duration: 0.22)
+                ) {
+                    isDetailExpanded.toggle()
+                }
+            } label: {
+                Text(isDetailExpanded ? "Less" : "Details")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(GIAColor.secondaryText)
+                    .frame(minHeight: 44)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(
+                isDetailExpanded
+                    ? "Hide hotel details"
+                    : "View hotel details"
+            )
+
+            Spacer()
+
+            Button(action: onToggleComparison) {
+                Image(
+                    systemName:
+                        isCompared
+                        ? "checkmark.circle.fill"
+                        : "plus.circle"
+                )
+                .font(.system(size: 18, weight: .medium))
+                .foregroundStyle(
+                    isCompared
+                        ? GIAColor.intelligenceAccent
+                        : GIAColor.secondaryText
+                )
+                .frame(width: 44, height: 44)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(
+                isCompared
+                    ? "Remove hotel from comparison"
+                    : "Add hotel to comparison"
+            )
+
+            Button(action: onSelect) {
+                Text(isSelected ? "Selected" : "Select")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(
+                        isSelected
+                            ? GIAColor.intelligenceAccent
+                            : GIAColor.canvas
+                    )
+                    .padding(.horizontal, 16)
+                    .frame(minHeight: 44)
+                    .background {
+                        Capsule(style: .continuous)
+                            .fill(
+                                isSelected
+                                    ? GIAColor.intelligenceAccent
+                                        .opacity(0.10)
+                                    : GIAColor.primaryText
+                            )
+                    }
+            }
+            .buttonStyle(.plain)
         }
     }
 }

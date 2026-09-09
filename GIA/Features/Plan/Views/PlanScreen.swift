@@ -89,7 +89,7 @@ struct PlanScreen: View {
                 PlanUnavailableState(
                     message:
                         tripPlanningSession.failure?.userMessage
-                        ?? "Start with G.I.A. on Map to create a trip.",
+                        ?? "Talk with G.I.A. on Map to start a trip.",
                     onReturnToMap: {
                         appState.select(.map)
                     }
@@ -632,11 +632,11 @@ private struct PlanUnavailableState: View {
 
     var body: some View {
         ContentUnavailableView {
-            Label("No plan available", systemImage: "map")
+            Label("No trip yet", systemImage: "map")
         } description: {
             Text(message)
         } actions: {
-            Button("Return to Map", action: onReturnToMap)
+            Button("Talk with G.I.A.", action: onReturnToMap)
                 .buttonStyle(.borderedProminent)
                 .tint(GIAColor.primaryText)
                 .foregroundStyle(GIAColor.canvas)
@@ -644,12 +644,12 @@ private struct PlanUnavailableState: View {
         }
         .foregroundStyle(GIAColor.secondaryText)
         .accessibilityHint(
-            "Return to Map to use manual activation or the offline demo."
+            "Returns to Map so you can talk with G.I.A."
         )
     }
 }
 
-private struct PlanLanguageMenu: View {
+struct PlanLanguageMenu: View {
     @Environment(PlanTranslationCoordinator.self)
     private var translationCoordinator
 
@@ -680,15 +680,13 @@ private struct PlanLanguageMenu: View {
                     translationCoordinator
                         .targetLanguage
                         .displayName
-                        .uppercased()
                 )
                 .lineLimit(1)
 
                 Image(systemName: "chevron.down")
                     .font(.system(size: 8, weight: .semibold))
             }
-            .font(.system(size: 9, weight: .semibold))
-            .tracking(1)
+            .font(.caption.weight(.semibold))
             .foregroundStyle(
                 translationCoordinator.failureMessage == nil
                     ? GIAColor.secondaryText
@@ -789,6 +787,8 @@ private struct PlanWorkspaceView: View {
     private var responseCoordinator
     @Environment(JudgeDemoController.self)
     private var judgeDemoController
+    @Environment(\.accessibilityReduceMotion)
+    private var reduceMotion
 
     let request: TripRequest
     let phase: TripPlanningPhase
@@ -819,193 +819,139 @@ private struct PlanWorkspaceView: View {
             )
 
             ScrollViewReader { scrollProxy in
-                ScrollView {
-                    LazyVStack(spacing: 25) {
-                        HStack {
-                            PlanLanguageMenu()
-
-                            Spacer()
-
-                            Button(action: onNewRequest) {
-                                Label(
-                                    "NEW REQUEST",
-                                    systemImage: "plus"
-                                )
-                                .font(.system(size: 9, weight: .semibold))
-                                .tracking(1.1)
-                                .foregroundStyle(
-                                    GIAColor.intelligenceAccent
-                                )
-                                .padding(.horizontal, 13)
-                                .frame(minHeight: 44)
-                                .background {
-                                    Capsule(style: .continuous)
-                                        .fill(
-                                            GIAColor
-                                                .intelligenceAccent
-                                                .opacity(0.08)
-                                        )
-                                }
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel(
-                                "Start a new travel request"
-                            )
-                        }
-
-                        if judgeDemoController.isActive {
-                            JudgeDemoStatusBanner(
-                                status:
-                                    judgeDemoController.statusLabel
-                            )
-                        }
-
-                        if showsResponseBanner {
-                            GIASpeechStatusBanner(
-                                state: responseCoordinator.state,
-                                text: responseCoordinator.visibleText,
-                                failureMessage:
-                                    responseCoordinator.failureMessage,
-                                onDismiss: {
-                                    responseCoordinator.stop()
-                                }
-                            )
-                            .task(id: responseCoordinator.state) {
-                                guard
-                                    responseCoordinator.state
-                                        == .generating
-                                else {
-                                    return
-                                }
-                                try? await Task.sleep(
-                                    nanoseconds: 4_250_000_000
-                                )
-                                guard !Task.isCancelled else { return }
-                                responseCoordinator
-                                    .cancelPendingResponse()
-                            }
-                        }
-
-                        PlanHeaderView(
-                            request: request,
-                            phase: phase,
-                            isProcessing:
-                                orchestrationState
-                                    == .resolvingLocation
-                                || orchestrationState == .searching
-                                || orchestrationState == .assembling,
-                            phaseTitleOverride:
-                                orchestrationPhaseTitle,
-                            onSelectMetric: onSelectMetric
-                        )
-
-                        if shouldOfferMapFollowUp {
-                            ConversationalClarificationNotice(
-                                phase: phase,
-                                onContinue: onContinueConversation
-                            )
-                        }
-
-                        if trip != nil || isOrchestrationActive {
-                            PlanningProgressView(
-                                progress: progress,
-                                phase: phase,
-                                failureMessage: failureMessage,
-                                onCancel: onCancel
-                            )
-
-                            if let trip {
-                                PlanningModuleRail(
-                                    phase: phase,
-                                    progress: progress,
-                                    trip: trip
+                VStack(spacing: 0) {
+                    PlanHeaderView(
+                        request: request,
+                        phase: phase,
+                        statusText: compactStatusMessage,
+                        isProcessing: isOrchestrationActive,
+                        canCancel: canCancelPlanning,
+                        jumpAnchors: jumpAnchors,
+                        showsAskGIA: shouldOfferMapFollowUp,
+                        isWaitingForAnswer:
+                            phase == .needsClarification,
+                        onSelectMetric: onSelectMetric,
+                        onJump: { anchor in
+                            withAnimation(jumpAnimation) {
+                                scrollProxy.scrollTo(
+                                    anchor.rawValue,
+                                    anchor: .top
                                 )
                             }
-                        }
-
-                        if let orchestrationError {
-                            OrchestrationAvailabilityNotice(
-                                state: orchestrationState,
-                                message: orchestrationError,
-                                reason: fallbackReason,
-                                onRetry: onRetry
-                            )
-                            .id("orchestration-availability")
-                        }
-
-                        if
-                            let trip,
-                            !trip.catalog.flightOffers.isEmpty
-                        {
-                            FlightComparisonSection(
-                                offers: trip.catalog.flightOffers,
-                                selectedIDs:
-                                    trip.selections.flightOfferIDs,
-                                bookings: trip.bookings,
-                                completingOfferID:
-                                    completingFlightOfferID,
-                                completionMessage:
-                                    flightCompletionMessage,
-                                onSelect: onSelectFlight
-                            )
-                            .id("flight-comparison")
-                        }
-
-                        if
-                            let trip,
-                            !trip.catalog.hotelOffers.isEmpty
-                        {
-                            HotelComparisonSection(
-                                offers: trip.catalog.hotelOffers,
-                                selectedIDs:
-                                    trip.selections.hotelOfferIDs,
-                                bookings: trip.bookings,
-                                onSelect: onSelectHotel
-                            )
-                            .id("hotel-comparison")
-                        }
-
-                        if let budgetConflictAnalysis {
-                            BudgetConflictSection(
-                                analysis: budgetConflictAnalysis
-                            )
-                            .id("budget-conflict")
-                        }
-
-                        if
-                            let trip,
-                            !trip.itinerary.days.isEmpty
-                        {
-                            SpatialItineraryTimeline(
-                                trip: trip,
-                                onMove: onMoveItineraryItem,
-                                onToggleLock:
-                                    onToggleItineraryItemLock
-                            )
-                            .id("itinerary-timeline")
-                        } else if
-                            trip != nil,
-                            orchestrationState == .resolvingLocation
-                                || orchestrationState == .searching
-                                || orchestrationState == .assembling
-                        {
-                            PlanTimelineFoundation(phase: phase)
-                        } else if
-                            trip == nil,
-                            phase != .needsClarification
-                        {
-                            TransientPlanStatus(
-                                phase: phase,
-                                failureMessage: failureMessage
-                            )
-                        }
-                    }
+                        },
+                        onNewRequest: onNewRequest,
+                        onCancel: onCancel,
+                        onAskGIA: onContinueConversation
+                    )
                     .padding(.horizontal, edge)
-                    .padding(.top, 18)
-                    .padding(.bottom, 30)
+                    .padding(.top, 10)
+                    .padding(.bottom, 12)
+
+                    ScrollView {
+                        LazyVStack(spacing: 18) {
+                            if judgeDemoController.isActive {
+                                JudgeDemoStatusBanner(
+                                    status:
+                                        judgeDemoController.statusLabel
+                                )
+                            }
+
+                            if showsResponseBanner {
+                                GIASpeechStatusBanner(
+                                    state: responseCoordinator.state,
+                                    text: responseCoordinator.visibleText,
+                                    failureMessage:
+                                        responseCoordinator.failureMessage,
+                                    onDismiss: {
+                                        responseCoordinator.stop()
+                                    }
+                                )
+                                .task(id: responseCoordinator.state) {
+                                    guard
+                                        responseCoordinator.state
+                                            == .generating
+                                    else {
+                                        return
+                                    }
+                                    try? await Task.sleep(
+                                        nanoseconds: 4_250_000_000
+                                    )
+                                    guard !Task.isCancelled else {
+                                        return
+                                    }
+                                    responseCoordinator
+                                        .cancelPendingResponse()
+                                }
+                            }
+
+                            if let orchestrationError {
+                                OrchestrationAvailabilityNotice(
+                                    state: orchestrationState,
+                                    message: orchestrationError,
+                                    reason: fallbackReason,
+                                    onRetry: onRetry
+                                )
+                                .id("orchestration-availability")
+                            }
+
+                            if
+                                let trip,
+                                !trip.itinerary.days.isEmpty
+                            {
+                                SpatialItineraryTimeline(
+                                    trip: trip,
+                                    onMove: onMoveItineraryItem,
+                                    onToggleLock:
+                                        onToggleItineraryItemLock
+                                )
+                                .id("itinerary-timeline")
+                            }
+
+                            if
+                                let trip,
+                                !trip.catalog.flightOffers.isEmpty
+                            {
+                                FlightComparisonSection(
+                                    offers: trip.catalog.flightOffers,
+                                    selectedIDs:
+                                        trip.selections.flightOfferIDs,
+                                    bookings: trip.bookings,
+                                    completingOfferID:
+                                        completingFlightOfferID,
+                                    completionMessage:
+                                        flightCompletionMessage,
+                                    onSelect: onSelectFlight
+                                )
+                                .id("flight-comparison")
+                            }
+
+                            if
+                                let trip,
+                                !trip.catalog.hotelOffers.isEmpty
+                            {
+                                HotelComparisonSection(
+                                    offers: trip.catalog.hotelOffers,
+                                    selectedIDs:
+                                        trip.selections.hotelOfferIDs,
+                                    bookings: trip.bookings,
+                                    onSelect: onSelectHotel
+                                )
+                                .id("hotel-comparison")
+                            }
+
+                            if let budgetConflictAnalysis {
+                                BudgetConflictSection(
+                                    analysis: budgetConflictAnalysis
+                                )
+                                .id("budget-conflict")
+                            }
+                        }
+                        .padding(.horizontal, edge)
+                        .padding(.bottom, 28)
+                    }
+                    .scrollIndicators(.hidden)
+                    .scrollBounceBehavior(.basedOnSize)
                 }
-                .scrollIndicators(.hidden)
-                .scrollBounceBehavior(.basedOnSize)
                 .task {
                     #if DEBUG
                     let environment = ProcessInfo.processInfo.environment
@@ -1044,6 +990,44 @@ private struct PlanWorkspaceView: View {
         }
     }
 
+    private var jumpAnchors: [PlanJumpAnchor] {
+        var anchors: [PlanJumpAnchor] = []
+        if let trip, !trip.itinerary.days.isEmpty {
+            anchors.append(.days)
+        }
+        if let trip, !trip.catalog.flightOffers.isEmpty {
+            anchors.append(.flights)
+        }
+        if let trip, !trip.catalog.hotelOffers.isEmpty {
+            anchors.append(.stay)
+        }
+        if budgetConflictAnalysis != nil {
+            anchors.append(.budget)
+        }
+        return anchors
+    }
+
+    private var canCancelPlanning: Bool {
+        switch phase {
+        case
+            .validating,
+            .needsClarification,
+            .searching,
+            .comparing,
+            .buildingItinerary,
+            .presenting:
+            true
+        default:
+            false
+        }
+    }
+
+    private var jumpAnimation: Animation {
+        reduceMotion
+            ? .linear(duration: 0.01)
+            : .easeInOut(duration: 0.28)
+    }
+
     private var isOrchestrationActive: Bool {
         switch orchestrationState {
         case .resolvingLocation, .searching, .assembling:
@@ -1063,6 +1047,26 @@ private struct PlanWorkspaceView: View {
         return appState.assistantReplyMode == .typing
     }
 
+    private var compactStatusMessage: String? {
+        if
+            orchestrationState == .failed || phase == .failed,
+            let failureMessage
+        {
+            return failureMessage
+        }
+        if
+            let activeMessage = progress.activeItem?.statusMessage,
+            !activeMessage.isEmpty
+        {
+            return activeMessage
+        }
+        return PlanPhasePresentation.workspaceStatus(
+            phase: phase,
+            orchestration: orchestrationState,
+            failureMessage: failureMessage
+        )
+    }
+
     private var shouldOfferMapFollowUp: Bool {
         switch phase {
         case
@@ -1076,25 +1080,6 @@ private struct PlanWorkspaceView: View {
             true
         default:
             false
-        }
-    }
-
-    private var orchestrationPhaseTitle: String? {
-        switch orchestrationState {
-        case .resolvingLocation:
-            "RESOLVING DESTINATION"
-        case .searching:
-            "LIVE RESULTS ARRIVING"
-        case .assembling:
-            "BUILDING YOUR ITINERARY"
-        case .ready:
-            "YOUR PLAN IS READY"
-        case .partiallyAvailable:
-            "PARTIAL RESULTS"
-        case .failed:
-            "PLANNING PAUSED"
-        case .idle, .cancelled:
-            nil
         }
     }
 }
@@ -1120,13 +1105,12 @@ private struct OrchestrationAvailabilityNotice: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(
                     reason == .offline
-                        ? "OFFLINE"
+                        ? "Offline"
                         : state == .failed
-                        ? "PLANNING PAUSED"
-                        : "PARTIAL AVAILABILITY"
+                        ? "Planning paused"
+                        : "Some results are missing"
                 )
-                .font(.system(size: 8, weight: .semibold))
-                .tracking(1.1)
+                .font(.caption.weight(.semibold))
                 .foregroundStyle(GIAColor.warningAccent)
 
                 Text(message)
@@ -1143,11 +1127,10 @@ private struct OrchestrationAvailabilityNotice: View {
 
                 Button(action: onRetry) {
                     Label(
-                        "RETRY LIVE SEARCH",
+                        "Try again",
                         systemImage: "arrow.clockwise"
                     )
-                    .font(.system(size: 9, weight: .semibold))
-                    .tracking(1)
+                    .font(.caption.weight(.semibold))
                     .frame(minHeight: 44)
                 }
                 .buttonStyle(.plain)
@@ -1200,7 +1183,7 @@ private struct ConversationalClarificationNotice: View {
 
                 Text(
                     isWaitingForAnswer
-                        ? "Answer naturally—there is no form to complete."
+                        ? "Answer naturally. There is no form to complete."
                         : "Map opens the same typed conversation so you can update this trip."
                 )
                 .font(.caption)
@@ -1274,7 +1257,7 @@ private struct ClarificationConversationCard: View {
                     .foregroundStyle(GIAColor.primaryText)
 
                     Text(
-                        "Keep everything else—there is no need "
+                        "Keep everything else. There is no need "
                         + "to repeat your request."
                     )
                     .font(.caption)
@@ -1459,39 +1442,20 @@ private struct JudgeDemoStatusBanner: View {
     let status: String
 
     var body: some View {
-        HStack(spacing: 13) {
-            ZStack {
-                Circle()
-                    .fill(GIAColor.intelligenceAccent.opacity(0.10))
-                Image(systemName: "shield.checkered")
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(GIAColor.intelligenceAccent)
-            }
-            .frame(width: 38, height: 38)
+        HStack(spacing: 10) {
+            Image(systemName: "shield.checkered")
+                .font(.caption.weight(.medium))
+                .foregroundStyle(GIAColor.intelligenceAccent)
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text("JUDGE-SAFE OFFLINE DEMO")
-                    .font(.system(size: 8, weight: .bold))
-                    .tracking(1.3)
-                    .foregroundStyle(GIAColor.intelligenceAccent)
+            Text("Judge-safe Tokyo demo. No live booking.")
+                .font(.caption)
+                .foregroundStyle(GIAColor.primaryText)
+                .lineLimit(2)
 
-                Text(status)
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(GIAColor.primaryText)
+            Spacer(minLength: 8)
 
-                Text(
-                    "Bundled Tokyo fixture · No live booking or "
-                    + "provider availability claimed"
-                )
-                .font(.caption2)
-                .foregroundStyle(GIAColor.secondaryText)
-            }
-
-            Spacer()
-
-            Text("DEMO")
-                .font(.system(size: 8, weight: .bold))
-                .tracking(1)
+            Text("Demo")
+                .font(.caption.weight(.bold))
                 .foregroundStyle(GIAColor.canvas)
                 .padding(.horizontal, 10)
                 .frame(height: 28)
@@ -1500,9 +1464,13 @@ private struct JudgeDemoStatusBanner: View {
                         .fill(GIAColor.intelligenceAccent)
                 }
         }
-        .padding(15)
-        .planSurface(cornerRadius: 20)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .planSurface(cornerRadius: 16)
         .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            "Judge-safe Tokyo demo. \(status). No live booking."
+        )
     }
 }
 
@@ -1538,15 +1506,14 @@ private struct GIASpeechStatusBanner: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(
                     state == .failed
-                        ? "VOICE UNAVAILABLE"
+                        ? "Voice unavailable"
                         : state == .playing
-                            ? "GIA SPEAKING"
+                            ? "G.I.A. speaking"
                             : state == .generating
-                                ? "PREPARING GIA"
-                                : "GIA"
+                                ? "G.I.A. is preparing"
+                                : "G.I.A."
                 )
-                .font(.system(size: 8, weight: .semibold))
-                .tracking(1.4)
+                .font(.caption.weight(.semibold))
                 .foregroundStyle(GIAColor.secondaryText)
 
                 Text(text)

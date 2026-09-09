@@ -40,6 +40,22 @@ enum TripFollowUpInterpretation: Sendable {
 }
 
 enum TripRequestInterpreter {
+    static func preferredClarificationField(
+        in issues: [RequestValidationIssue]
+    ) -> TripClarificationField? {
+        let fields = Set(issues.map(\.field))
+        return [
+            .destination,
+            .dates,
+            .travelers,
+            .budget,
+            .origin,
+            .dietaryRequirements,
+            .accessibility,
+            .preferences
+        ].first { fields.contains($0) }
+    }
+
     static func interpret(
         transcript: String,
         now: Date = Date()
@@ -319,6 +335,20 @@ enum TripRequestInterpreter {
             request = updated
         }
 
+        // A person will often answer one question with several useful facts,
+        // such as dates, party size, and budget in the same sentence. Merge
+        // every additional fact the normal follow-up parser understands so
+        // those details are not silently discarded after clarification.
+        if
+            case .updated(let supplemented, _) = interpretFollowUp(
+                transcript: transcript,
+                applyingTo: request,
+                now: now
+            )
+        {
+            request = supplemented
+        }
+
         request.rawTranscript = [
             currentRequest.rawTranscript,
             "Answer: \(transcript)"
@@ -453,11 +483,28 @@ enum TripRequestInterpreter {
         for request: TripRequest
     ) -> [String] {
         var examples: [String] = []
-        if request.totalBudget == nil {
-            examples.append("a budget")
-        }
         if request.origin == nil {
             examples.append("where you're leaving from")
+        }
+        if request.totalBudget == nil {
+            examples.append("your budget")
+        }
+        if
+            request.flightPreferences.stopPreference == .any,
+            request.flightPreferences.departureTimeWindow == nil,
+            request.flightPreferences.preferredAirlines.isEmpty
+        {
+            examples.append("flight timing or stop preferences")
+        }
+        if
+            request.hotelPreferences.minimumStarRating == nil,
+            request.hotelPreferences.requiredAmenities.isEmpty,
+            request.hotelPreferences.maximumNightlyRate == nil
+        {
+            examples.append("what you need from a hotel")
+        }
+        if request.interests.isEmpty {
+            examples.append("what you want to do there")
         }
         if request.dietaryRequirements.isEmpty {
             examples.append("dietary needs")
@@ -465,10 +512,7 @@ enum TripRequestInterpreter {
         if request.accessibilityRequirements.isEmpty {
             examples.append("accessibility needs")
         }
-        if request.interests.isEmpty {
-            examples.append("what you want to do there")
-        }
-        return Array(examples.prefix(2))
+        return examples
     }
 
     private static func parseFollowUpDestination(
@@ -1128,19 +1172,21 @@ enum TripRequestInterpreter {
         in transcript: String,
         now: Date
     ) -> TripDateRange? {
+        let text = normalizingRelativeDateText(transcript)
         let calendar = tripCalendar()
-        let duration = parseDurationDays(in: transcript)
-        let relativeToken =
-            #"(next\s+weekend|this\s+weekend|day\s+after\s+tomorrow|next\s+week|this\s+week|tomorrow|tonight|today|now)"#
+        let duration = parseDurationDays(in: text)
+        let relativeToken = Self.relativeDateTokenPattern
+        let connector =
+            #"(?:to|till|til|until|through|thru|from|form|for|up to|starting(?:\s+from)?|–|-)"#
         let rangePattern =
             #"\b(?:(?:from|starting(?:\s+from)?)\s+)?"#
             + relativeToken
-            + #"\s*(?:to|till|til|until|through|thru|up to|–|-)\s*"#
+            + #"\s*"# + connector + #"\s*"#
             + relativeToken
             + #"\b"#
 
         if
-            let values = captures(rangePattern, in: transcript),
+            let values = captures(rangePattern, in: text),
             values.count >= 2,
             let first = relativePeriod(
                 values[0],
@@ -1153,20 +1199,27 @@ enum TripRequestInterpreter {
                 calendar: calendar
             )
         {
-            if let duration {
-                return range(from: first.start, durationDays: duration)
-            }
-            let end = max(second.end, first.start)
-            return makeDateRange(start: first.start, end: end)
+            return dateRange(
+                from: first,
+                to: second,
+                durationDays: duration
+            )
         }
 
-        if
-            let period = firstRelativePeriod(
-                in: transcript,
-                now: now,
-                calendar: calendar
+        let periods = relativePeriods(
+            in: text,
+            now: now,
+            calendar: calendar
+        )
+        if periods.count >= 2 {
+            return dateRange(
+                from: periods[0],
+                to: periods[periods.count - 1],
+                durationDays: duration
             )
-        {
+        }
+
+        if let period = periods.first {
             if let duration {
                 return range(from: period.start, durationDays: duration)
             }
@@ -1180,17 +1233,73 @@ enum TripRequestInterpreter {
         return nil
     }
 
-    private static func firstRelativePeriod(
+    private static let relativeDateTokenPattern =
+        #"(next\s+weekend|this\s+weekend|day\s+after\s+tomorrow|next\s+week|this\s+week|tomorrow|tonight|today|now)"#
+
+    private static func relativePeriods(
         in transcript: String,
         now: Date,
         calendar: Calendar
-    ) -> RelativePeriod? {
-        let pattern =
-            #"\b(next\s+weekend|this\s+weekend|day\s+after\s+tomorrow|next\s+week|this\s+week|tomorrow|tonight|today|now)\b"#
-        guard let token = firstCapture(pattern, in: transcript) else {
-            return nil
+    ) -> [RelativePeriod] {
+        guard
+            let expression = try? NSRegularExpression(
+                pattern: #"\b"# + relativeDateTokenPattern + #"\b"#,
+                options: [.caseInsensitive]
+            )
+        else {
+            return []
         }
-        return relativePeriod(token, now: now, calendar: calendar)
+
+        let fullRange = NSRange(transcript.startIndex..., in: transcript)
+        return expression.matches(in: transcript, range: fullRange)
+            .compactMap { match in
+                guard
+                    match.numberOfRanges >= 2,
+                    let tokenRange = Range(match.range(at: 1), in: transcript)
+                else {
+                    return nil
+                }
+                return relativePeriod(
+                    String(transcript[tokenRange]),
+                    now: now,
+                    calendar: calendar
+                )
+            }
+    }
+
+    private static func dateRange(
+        from first: RelativePeriod,
+        to second: RelativePeriod,
+        durationDays: Int?
+    ) -> TripDateRange {
+        let start = min(first.start, second.start)
+        if let durationDays {
+            return range(from: start, durationDays: durationDays)
+        }
+        let end = max(first.end, second.end)
+        return makeDateRange(start: start, end: end)
+    }
+
+    private static func normalizingRelativeDateText(
+        _ transcript: String
+    ) -> String {
+        var text = transcript
+        let replacements: [(String, String)] = [
+            (#"\bform\b"#, "from"),
+            (#"\benxt\s+week\b"#, "next week"),
+            (#"\bnetx\s+week\b"#, "next week"),
+            (#"\bnxt\s+week\b"#, "next week"),
+            (#"\bthrouh\b"#, "through"),
+            (#"\bthrought\b"#, "through")
+        ]
+        for (pattern, replacement) in replacements {
+            text = text.replacingOccurrences(
+                of: pattern,
+                with: replacement,
+                options: [.regularExpression, .caseInsensitive]
+            )
+        }
+        return text
     }
 
     private static func relativePeriod(

@@ -53,8 +53,8 @@ enum GIAHumanReplyComposer {
                 + "if you want that in. Or say that's it."
         default:
             question =
-                "Anything else? I don't have \(omittedExamples[0]) "
-                + "or \(omittedExamples[1]) yet, if you want those in. "
+                "Anything else? Share your departure city, budget, or "
+                + "preferences for flights, hotels, and things to do. "
                 + "Or say that's it."
         }
 

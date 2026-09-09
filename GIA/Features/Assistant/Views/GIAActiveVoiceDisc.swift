@@ -149,9 +149,9 @@ struct GIAActiveVoiceDisc: View, Animatable {
         switch presentationState {
         case .error:
             return GIAColor.warningAccent
-        case .processing, .speaking:
+        case .wakeDetected, .listening, .processing, .speaking:
             return GIAColor.intelligenceAccent
-        case .idle, .wakeDetected, .listening, .returning:
+        case .idle, .returning:
             return GIAColor.primaryText
         }
     }

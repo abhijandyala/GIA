@@ -195,6 +195,59 @@ test("first spoken phrase splits after a complete sentence", () => {
   );
 });
 
+test("streaming talk prefetches the first spoken sentence before JSON closes", async () => {
+  const prefetched = [];
+  const spokenJSON =
+    '{"spokenText":"Nice, that window works. How many people are traveling?","displayText":"Nice, that window works. How many people are traveling?","intent":"clarificationNeeded","shouldContinueListening":true}';
+  const firstSentence = "Nice, that window works.";
+  const responder = createOpenAIConversationResponder({
+    apiKey: "server-key",
+    prefetchSpeech: (text) => {
+      prefetched.push(text);
+    },
+    fetchImplementation: async () => new Response(
+      [
+        sseEvent("response.output_text.delta", {
+          type: "response.output_text.delta",
+          delta: '{"spokenText":"Nice, that window works. How many pe'
+        }),
+        sseEvent("response.output_text.delta", {
+          type: "response.output_text.delta",
+          delta: spokenJSON.slice(
+            '{"spokenText":"Nice, that window works. How many pe'.length
+          )
+        }),
+        sseEvent("response.completed", {
+          type: "response.completed"
+        })
+      ].join(""),
+      {
+        headers: {
+          "content-type": "text/event-stream"
+        }
+      }
+    )
+  });
+
+  const response = await responder({
+    intent: "clarificationNeeded",
+    requestSummary: "Destination: Paris",
+    groundedFacts: ["Ask next: how many people are traveling."]
+  });
+
+  assert.equal(
+    response.spokenText,
+    "Nice, that window works. How many people are traveling?"
+  );
+  assert.equal(prefetched[0], firstSentence);
+  assert.equal(
+    prefetched.includes(
+      "Nice, that window works. How many people are traveling?"
+    ),
+    true
+  );
+});
+
 test("partial JSON yields a spoken prefix before the object closes", () => {
   const partial = spokenTextFromPartialOutput(
     '{"spokenText":"Nice — mid-May works. How many pe'
@@ -211,7 +264,7 @@ test("partial JSON yields a spoken prefix before the object closes", () => {
   assert.equal(closed.text, "Okay, I've got it.");
 });
 
-test("streaming talk prefetches the first sentence before completion", async () => {
+test("streaming talk prefetches the complete spoken reply", async () => {
   const prefetched = [];
   const spokenJSON =
     '{"spokenText":"Nice — mid-May works. How many people are traveling?","displayText":"Nice — mid-May works. How many people are traveling?","intent":"clarificationNeeded","shouldContinueListening":true}';
@@ -252,10 +305,15 @@ test("streaming talk prefetches the first sentence before completion", async () 
     response.spokenText,
     "Nice. Mid-May works. How many people are traveling?"
   );
-  assert.deepEqual(prefetched, ["Nice. Mid-May works."]);
+  assert.equal(
+    prefetched.includes(
+      "Nice. Mid-May works. How many people are traveling?"
+    ),
+    true
+  );
 });
 
-test("output_text.done still prefetches the first spoken sentence", async () => {
+test("output_text.done prefetches the complete spoken reply", async () => {
   const prefetched = [];
   const spokenJSON =
     '{"spokenText":"Nice — mid-May works. How many people are traveling?","displayText":"Nice — mid-May works. How many people are traveling?","intent":"clarificationNeeded","shouldContinueListening":true}';
@@ -287,7 +345,9 @@ test("output_text.done still prefetches the first spoken sentence", async () => 
     response.spokenText,
     "Nice. Mid-May works. How many people are traveling?"
   );
-  assert.deepEqual(prefetched, ["Nice. Mid-May works."]);
+  assert.deepEqual(prefetched, [
+    "Nice. Mid-May works. How many people are traveling?"
+  ]);
 });
 
 test("failed streamed talk responses do not return partial JSON", async () => {

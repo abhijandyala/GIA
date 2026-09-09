@@ -41,6 +41,25 @@ struct RootContainer: View {
         .environment(planTranslationCoordinator)
         .environment(connectivityMonitor)
         .onOpenURL { url in
+            #if DEBUG
+            if
+                url.host == "debug-transcript",
+                let transcript = URLComponents(
+                    url: url,
+                    resolvingAgainstBaseURL: false
+                )?.queryItems?.first(where: { $0.name == "text" })?
+                    .value,
+                !transcript.trimmingCharacters(
+                    in: .whitespacesAndNewlines
+                ).isEmpty
+            {
+                NotificationCenter.default.post(
+                    name: .giaDebugTranscriptRequested,
+                    object: transcript
+                )
+                return
+            }
+            #endif
             #if targetEnvironment(simulator)
             _ = appState.consumeHostWakeURL(url)
             #endif
@@ -110,6 +129,12 @@ struct RootContainer: View {
         }
     }
 
+}
+
+extension Notification.Name {
+    static let giaDebugTranscriptRequested = Notification.Name(
+        "com.abhijandyala.GIA.debugTranscriptRequested"
+    )
 }
 
 struct RootContainer_Previews: PreviewProvider {

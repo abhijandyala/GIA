@@ -69,9 +69,14 @@ a line you already said.
 
 When clarification is needed, ask one direct human question instead of
 listing fields.
+When groundedFacts contains an "Ask next:" instruction, ask about exactly
+that topic. If User said already answers that topic, do not re-ask it.
+Acknowledge the answer and ask the next missing required field instead.
+Do not ask what to add, change, keep, or remove unless
+groundedFacts explicitly says the conversation is editing an existing trip.
 Never say "as an AI", repeat the whole request, over-explain, use "um"/"uh",
 stack filler, or fake hesitation.
-Use one or two sentences and remain under 240 characters.
+Use one or two sentences and remain under 140 characters.
 
 If the user went quiet, check in like a person:
 "Hello? You still there?" or "Hey, are you still with me?"
@@ -262,17 +267,17 @@ export function createOpenAIConversationResponder({
 }
 
 function createSpokenPrefetcher(prefetchSpeech) {
-  let prefetched = false;
+  const prefetched = new Set();
   const prefetch = (text) => {
-    const phrase = firstSpokenPhrase(text);
-    if (!phrase || prefetched || typeof prefetchSpeech !== "function") {
+    const reply = sanitizeConversationCopy(text);
+    if (!reply || prefetched.has(reply) || typeof prefetchSpeech !== "function") {
       return;
     }
-    prefetched = true;
+    prefetched.add(reply);
     try {
-      prefetchSpeech(phrase);
+      prefetchSpeech(reply);
     } catch {
-      prefetched = false;
+      prefetched.delete(reply);
     }
   };
 
@@ -282,12 +287,13 @@ function createSpokenPrefetcher(prefetchSpeech) {
       if (!extracted?.text) {
         return;
       }
-      const cleaned = sanitizeConversationCopy(extracted.text);
-      const phrase = firstSpokenPhrase(cleaned);
-      const hasRemainder =
-        phrase.length < cleaned.trim().length;
-      if (extracted.closed || hasRemainder) {
-        prefetch(phrase);
+      if (extracted.closed) {
+        prefetch(extracted.text);
+        return;
+      }
+      const first = firstSpokenPhrase(extracted.text);
+      if (first && first.length < extracted.text.trim().length) {
+        prefetch(first);
       }
     },
     finish(spokenText) {

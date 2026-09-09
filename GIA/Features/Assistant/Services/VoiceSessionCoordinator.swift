@@ -42,6 +42,7 @@ enum VoicePermissionState: String, Sendable {
 final class VoiceSessionCoordinator {
     private(set) var mode: VoiceSessionMode = .stopped
     private(set) var level: CGFloat = 0
+    private(set) var isUserSpeaking = false
     private(set) var liveTranscript = ""
     private(set) var completedTranscript: String?
     private(set) var detectedWakePhrase: String?
@@ -125,7 +126,11 @@ final class VoiceSessionCoordinator {
         #if DEBUG
         if ProcessInfo.processInfo.environment[
             "GIA_AUTORUN_PLAN_HANDOFF_TRANSCRIPT"
-        ] != nil {
+        ] != nil
+            || ProcessInfo.processInfo.environment[
+                "GIA_DEBUG_INJECT_TRANSCRIPT"
+            ] != nil
+        {
             return
         }
         #endif
@@ -136,6 +141,7 @@ final class VoiceSessionCoordinator {
     }
 
     func startRequestTranscription() async {
+        recognitionUnavailable = false
         clearRecognitionOutput()
         resetRecognitionPreference()
         await start(mode: .requestTranscription)
@@ -149,6 +155,24 @@ final class VoiceSessionCoordinator {
     func pauseForSpeechPlayback() {
         stop()
     }
+
+    #if DEBUG
+    /// Publishes text through the same observable completion event consumed
+    /// after live speech recognition finishes. Simulator automation therefore
+    /// exercises the real conversation path without opening the microphone.
+    func injectCompletedTranscript(_ transcript: String) {
+        let normalized = VoiceRecognitionRules
+            .strippingWakePhrasePrefix(from: transcript)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !normalized.isEmpty else { return }
+
+        stop()
+        liveTranscript = normalized
+        completedTranscript = normalized
+        lastFailure = nil
+        transcriptionSequence &+= 1
+    }
+    #endif
 
     func stop() {
         desiredMode = .stopped
@@ -231,12 +255,31 @@ final class VoiceSessionCoordinator {
                 return
             }
 
+            let recognizerReady =
+                await waitUntilSpeechRecognizerAvailable(
+                    generation: generation
+                )
             guard
+                desiredMode == requestedMode,
+                sessionGeneration == generation
+            else {
+                return
+            }
+            guard
+                recognizerReady,
                 let speechRecognizer,
                 speechRecognizer.isAvailable
             else {
-                recognitionUnavailable = true
-                if requestedMode == .requestTranscription {
+                if
+                    requestedMode == .requestTranscription,
+                    recognitionRestartCount < 2
+                {
+                    scheduleRecognitionRestart(
+                        mode: requestedMode,
+                        generation: generation
+                    )
+                } else if requestedMode == .requestTranscription {
+                    recognitionUnavailable = true
                     publishFailure(.recognitionUnavailable)
                 }
                 return
@@ -334,10 +377,25 @@ final class VoiceSessionCoordinator {
             isSpeechUtteranceActive = false
             speechSilenceDuration = 0
             self.mode = requestedMode
+            recognitionRestartCount = 0
             startDynamicsLoop(generation: generation)
         } catch {
-            recognitionUnavailable = true
-            if requestedMode == .requestTranscription {
+            if
+                requestedMode == .requestTranscription,
+                recognitionRestartCount < 2
+            {
+                #if os(iOS)
+                try? AVAudioSession.sharedInstance().setActive(
+                    false,
+                    options: .notifyOthersOnDeactivation
+                )
+                #endif
+                scheduleRecognitionRestart(
+                    mode: requestedMode,
+                    generation: generation
+                )
+            } else if requestedMode == .requestTranscription {
+                recognitionUnavailable = true
                 publishFailure(.recognitionInterrupted)
             } else if requestedMode == .wakePhrase {
                 scheduleWakeRestart(generation: generation)
@@ -494,6 +552,7 @@ final class VoiceSessionCoordinator {
     private func consume(speech decision: SpeechGateDecision) {
         lastMeasurementTime = ProcessInfo.processInfo.systemUptime
         isSpeechUtteranceActive = decision.isUtteranceActive
+        isUserSpeaking = decision.isUtteranceActive
         speechSilenceDuration = decision.silenceDuration
 
         let decibels = decision.speechBandDecibels
@@ -821,6 +880,25 @@ final class VoiceSessionCoordinator {
         stop()
     }
 
+    private func waitUntilSpeechRecognizerAvailable(
+        generation: Int
+    ) async -> Bool {
+        let deadline = Date().addingTimeInterval(2.4)
+        while Date() < deadline {
+            guard
+                desiredMode != .stopped,
+                sessionGeneration == generation
+            else {
+                return false
+            }
+            if speechRecognizer?.isAvailable == true {
+                return true
+            }
+            try? await Task.sleep(nanoseconds: 120_000_000)
+        }
+        return speechRecognizer?.isAvailable == true
+    }
+
     private func scheduleWakeRestart(generation: Int) {
         scheduleRecognitionRestart(
             mode: .wakePhrase,
@@ -909,6 +987,7 @@ final class VoiceSessionCoordinator {
         audioEngine.reset()
         speechDetector.reset()
         isSpeechUtteranceActive = false
+        isUserSpeaking = false
         speechSilenceDuration = 0
         targetLevel = 0
         level = 0

@@ -21,6 +21,9 @@ enum GIAResponsePhrase: String, CaseIterable, Sendable {
     case keepGoing
     case stillListening
     case whatDoYouMean
+    case okay
+    case gotIt
+    case nice
 
     var text: String {
         switch self {
@@ -60,7 +63,24 @@ enum GIAResponsePhrase: String, CaseIterable, Sendable {
             "I'm here. Just tell me the trip."
         case .whatDoYouMean:
             "What do you mean?"
+        case .okay:
+            "Okay."
+        case .gotIt:
+            "Got it."
+        case .nice:
+            "Nice."
         }
+    }
+}
+
+enum GIAConversationBackchannel {
+    static let phrases: [GIAResponsePhrase] = [.okay, .gotIt, .nice]
+
+    static func phrase(for utterance: String) -> GIAResponsePhrase {
+        let sum = utterance.unicodeScalars.reduce(into: 0) { total, scalar in
+            total = total &+ Int(scalar.value)
+        }
+        return phrases[abs(sum) % phrases.count]
     }
 }
 
@@ -202,6 +222,13 @@ enum GIAConversationFallback {
                 intent: .clarificationNeeded,
                 shouldContinueListening: true
             )
+        case .okay, .gotIt, .nice:
+            GIAConversationResponse(
+                spokenText: phrase.text,
+                displayText: phrase.text,
+                intent: .clarificationNeeded,
+                shouldContinueListening: true
+            )
         }
     }
 }
@@ -211,6 +238,12 @@ enum GIAResponseState: String, Sendable {
     case generating
     case playing
     case failed
+}
+
+enum GIASpeechPlaybackSource: String, Sendable {
+    case none
+    case elevenLabs
+    case systemFallback
 }
 
 @MainActor
@@ -227,6 +260,8 @@ final class GIAResponseCoordinator:
     private(set) var lastResponse: GIAConversationResponse?
     private(set) var usedFallbackResponse = false
     private(set) var preservesListening = false
+    private(set) var speechPlaybackSource: GIASpeechPlaybackSource = .none
+    private(set) var isHoldingConversationTurn = false
 
     var isPlaying: Bool {
         state == .playing
@@ -260,9 +295,9 @@ final class GIAResponseCoordinator:
     @ObservationIgnored
     private var phraseCache: [GIAResponsePhrase: GeneratedSpeech] = [:]
     @ObservationIgnored
-    private var pendingRestSpeechTask: Task<GeneratedSpeech?, Never>?
-    @ObservationIgnored
     private var clearsVisibleTextOnFinish = true
+    @ObservationIgnored
+    private var isPlayingBackchannel = false
 
     override convenience init() {
         let service = GIAAssistantServiceFactory.make()
@@ -272,12 +307,16 @@ final class GIAResponseCoordinator:
             environment["GIA_DEBUG_DISABLE_SPEECH"] == "1"
             ? nil
             : service
+        let strictProviderFailures =
+            environment["GIA_DEBUG_STRICT_PROVIDER_FAILURES"] == "1"
         self.init(
             speechGenerator: speechGenerator,
             responseGenerator: service,
             replyInterpreter: service,
-            allowsSystemVoiceFallback: false,
-            allowsCannedReplyFallback: false
+            allowsSystemVoiceFallback:
+                !strictProviderFailures
+                && environment["GIA_DEBUG_DISABLE_SPEECH"] != "1",
+            allowsCannedReplyFallback: !strictProviderFailures
         )
         #else
         self.init(
@@ -302,9 +341,6 @@ final class GIAResponseCoordinator:
         self.allowsCannedReplyFallback = allowsCannedReplyFallback
         super.init()
         speechSynthesizer.delegate = self
-        Task { @MainActor [weak self] in
-            await self?.warmupCommonPhrases()
-        }
     }
 
     func interpretSpokenReply(
@@ -348,6 +384,69 @@ final class GIAResponseCoordinator:
         failureMessage = nil
         state = .idle
         usedFallbackResponse = true
+        isHoldingConversationTurn = false
+        isPlayingBackchannel = false
+    }
+
+    func beginHeldTurn() {
+        audioPlayer?.stop()
+        audioPlayer = nil
+        localSpeechGeneration = nil
+        speechSynthesizer.stopSpeaking(at: .immediate)
+        playbackContinuation?.resume(returning: false)
+        playbackContinuation = nil
+        isHoldingConversationTurn = true
+        isPlayingBackchannel = false
+        failureMessage = nil
+        state = .generating
+        speechPlaybackSource = .none
+    }
+
+    func playBackchannel(_ phrase: GIAResponsePhrase) async {
+        isPlayingBackchannel = true
+        isHoldingConversationTurn = true
+        failureMessage = nil
+        if state != .playing {
+            state = .generating
+        }
+        guard speechGenerator != nil else {
+            isPlayingBackchannel = false
+            state = .generating
+            return
+        }
+        let keptText = visibleText
+        let keptResponse = lastResponse
+        _ = await generateAndPlay(
+            response: GIAConversationFallback.response(for: phrase),
+            cachedPhrase: phrase,
+            generation: generation,
+            preservesListening: true,
+            updatesVisibleText: false
+        )
+        visibleText = keptText
+        lastResponse = keptResponse
+        usedFallbackResponse = false
+        isPlayingBackchannel = false
+        if isHoldingConversationTurn, state != .playing {
+            state = .generating
+        }
+    }
+
+    func prefetchBackchannelAudio() async {
+        guard let speechGenerator else { return }
+        for phrase in GIAConversationBackchannel.phrases {
+            if phraseCache[phrase] != nil {
+                continue
+            }
+            if
+                let speech = await generatedSpeech(
+                    from: speechGenerator,
+                    text: phrase.text
+                )
+            {
+                phraseCache[phrase] = speech
+            }
+        }
     }
 
     func respond(
@@ -362,11 +461,15 @@ final class GIAResponseCoordinator:
         else {
             return false
         }
-        return await generateAndPlay(
+        await waitForBackchannelIfNeeded()
+        isHoldingConversationTurn = true
+        let played = await generateAndPlay(
             response: prepared.response,
             cachedPhrase: nil,
             generation: prepared.generation
         )
+        isHoldingConversationTurn = false
+        return played
     }
 
     private struct PreparedConversationReply {
@@ -378,7 +481,12 @@ final class GIAResponseCoordinator:
         to context: GIAConversationContext,
         fallback: GIAConversationResponse?
     ) async -> PreparedConversationReply? {
-        stop(clearVisibleText: true)
+        if isHoldingConversationTurn || isPlayingBackchannel {
+            failureMessage = nil
+            state = .generating
+        } else {
+            stop(clearVisibleText: true)
+        }
         let currentGeneration = generation
         let fallbackResponse =
             fallback
@@ -499,9 +607,27 @@ final class GIAResponseCoordinator:
         response: GIAConversationResponse,
         cachedPhrase: GIAResponsePhrase?,
         generation currentGeneration: Int,
-        preservesListening: Bool = false
+        preservesListening: Bool = false,
+        updatesVisibleText: Bool = true
     ) async -> Bool {
+        speechPlaybackSource = .none
         guard let speechGenerator else {
+            return await playSystemVoiceFallback(
+                response.spokenText,
+                generation: currentGeneration,
+                overlapping: preservesListening
+            )
+        }
+
+        let texts: [String]
+        if cachedPhrase != nil {
+            texts = Self.speechRequestTexts(for: response.spokenText)
+        } else {
+            texts = GIAConversationCopy.spokenPlaybackSegments(
+                for: response.spokenText
+            )
+        }
+        guard !texts.isEmpty else {
             return await playSystemVoiceFallback(
                 response.spokenText,
                 generation: currentGeneration,
@@ -513,95 +639,38 @@ final class GIAResponseCoordinator:
             let cachedPhrase,
             let cached = phraseCache[cachedPhrase]
         {
-            return await playGeneratedSpeech(
+            let played = await playGeneratedSpeech(
                 cached,
                 generation: currentGeneration,
                 preservesListening: preservesListening,
-                clearVisibleTextOnSuccess: true
+                clearVisibleTextOnSuccess: false
             )
-        }
-
-        if cachedPhrase == nil {
-            let leading = GIASpokenPhraseSplitter.leadingPhrase(
-                in: response.spokenText
-            )
-            let remainder = GIASpokenPhraseSplitter.remainder(
-                after: leading,
-                in: response.spokenText
-            )
-            if !remainder.isEmpty {
-                guard
-                    let first = await generatedSpeech(
-                        from: speechGenerator,
-                        text: leading
-                    )
-                else {
-                    return await playSystemVoiceFallback(
-                        response.spokenText,
-                        generation: currentGeneration,
-                        overlapping: preservesListening
-                    )
-                }
-                pendingRestSpeechTask?.cancel()
-                pendingRestSpeechTask = Task { [weak self] in
-                    guard let self else { return nil }
-                    return await self.generatedSpeech(
-                        from: speechGenerator,
-                        text: remainder
-                    )
-                }
-                let playedFirst = await playGeneratedSpeech(
-                    first,
-                    generation: currentGeneration,
-                    preservesListening: preservesListening,
-                    clearVisibleTextOnSuccess: false
-                )
-                guard
-                    playedFirst,
-                    generation == currentGeneration,
-                    !Task.isCancelled
-                else {
-                    pendingRestSpeechTask?.cancel()
-                    pendingRestSpeechTask = nil
-                    guard generation == currentGeneration else {
-                        return false
-                    }
-                    return await playSystemVoiceFallback(
-                        response.spokenText,
-                        generation: currentGeneration,
-                        overlapping: preservesListening
-                    )
-                }
-                let rest = await pendingRestSpeechTask?.value
-                pendingRestSpeechTask = nil
-                if let rest {
-                    let playedRest = await playGeneratedSpeech(
-                        rest,
-                        generation: currentGeneration,
-                        preservesListening: preservesListening,
-                        clearVisibleTextOnSuccess: false,
-                        overlappingAudioSession: true
-                    )
-                    if playedRest {
-                        return true
-                    }
-                }
-                state = .idle
+            if played {
                 return true
             }
+            guard generation == currentGeneration else {
+                return false
+            }
+            return await playSystemVoiceFallback(
+                response.spokenText,
+                generation: currentGeneration,
+                overlapping: preservesListening
+            )
         }
 
-        let speech: GeneratedSpeech
-        if
-            let cachedPhrase,
-            let cached = phraseCache[cachedPhrase]
-        {
-            speech = cached
-        } else {
+        var playedAny = false
+        var pendingSpeech: GeneratedSpeech?
+        if texts.count > 1 {
+            let restText = texts[1]
+            pendingSpeech = nil
+            async let restGeneration = generatedSpeech(
+                from: speechGenerator,
+                text: restText
+            )
             guard
-                let generated = await generatedSpeech(
+                let firstSpeech = await generatedSpeech(
                     from: speechGenerator,
-                    text: response.spokenText
+                    text: texts[0]
                 )
             else {
                 return await playSystemVoiceFallback(
@@ -610,18 +679,94 @@ final class GIAResponseCoordinator:
                     overlapping: preservesListening
                 )
             }
-            speech = generated
+            isHoldingConversationTurn = updatesVisibleText
+            let playedFirst = await playGeneratedSpeech(
+                firstSpeech,
+                generation: currentGeneration,
+                preservesListening: true,
+                clearVisibleTextOnSuccess: false
+            )
+            pendingSpeech = await restGeneration
+            if playedFirst {
+                playedAny = true
+                if generation == currentGeneration {
+                    state = .generating
+                }
+            }
+            if
+                let rest = pendingSpeech,
+                generation == currentGeneration,
+                !Task.isCancelled
+            {
+                if updatesVisibleText {
+                    isHoldingConversationTurn = false
+                }
+                let playedRest = await playGeneratedSpeech(
+                    rest,
+                    generation: currentGeneration,
+                    preservesListening: preservesListening,
+                    clearVisibleTextOnSuccess: false
+                )
+                playedAny = playedAny || playedRest
+            }
+            return playedAny
+        }
+        for (index, speechText) in texts.enumerated() {
+            guard generation == currentGeneration, !Task.isCancelled else {
+                return playedAny
+            }
+            let isLast = index == texts.count - 1
+            if updatesVisibleText {
+                isHoldingConversationTurn = !isLast
+            }
+            guard
+                let generated = await generatedSpeech(
+                    from: speechGenerator,
+                    text: speechText
+                )
+            else {
+                if playedAny {
+                    continue
+                }
+                return await playSystemVoiceFallback(
+                    response.spokenText,
+                    generation: currentGeneration,
+                    overlapping: preservesListening
+                )
+            }
             if let cachedPhrase {
-                phraseCache[cachedPhrase] = speech
+                phraseCache[cachedPhrase] = generated
+            }
+            let played = await playGeneratedSpeech(
+                generated,
+                generation: currentGeneration,
+                preservesListening: preservesListening || !isLast,
+                clearVisibleTextOnSuccess: false
+            )
+            if played {
+                playedAny = true
+            } else if !playedAny {
+                return await playSystemVoiceFallback(
+                    response.spokenText,
+                    generation: currentGeneration,
+                    overlapping: preservesListening
+                )
+            }
+            if !isLast, generation == currentGeneration {
+                state = .generating
             }
         }
+        return playedAny
+    }
 
-        return await playGeneratedSpeech(
-            speech,
-            generation: currentGeneration,
-            preservesListening: preservesListening,
-            clearVisibleTextOnSuccess: cachedPhrase != nil
-        )
+    private func waitForBackchannelIfNeeded() async {
+        while isPlayingBackchannel, !Task.isCancelled {
+            try? await Task.sleep(nanoseconds: 20_000_000)
+        }
+    }
+
+    static func speechRequestTexts(for text: String) -> [String] {
+        GIAConversationCopy.spokenPlaybackSegments(for: text)
     }
 
     private func playGeneratedSpeech(
@@ -665,6 +810,7 @@ final class GIAResponseCoordinator:
                     finishPlayback(success: false)
                     return
                 }
+                speechPlaybackSource = .elevenLabs
                 state = .playing
                 startMetering(generation: currentGeneration)
             }
@@ -678,8 +824,6 @@ final class GIAResponseCoordinator:
         deactivateAudio: Bool = true
     ) {
         generation &+= 1
-        pendingRestSpeechTask?.cancel()
-        pendingRestSpeechTask = nil
         audioPlayer?.stop()
         audioPlayer = nil
         localSpeechGeneration = nil
@@ -691,6 +835,8 @@ final class GIAResponseCoordinator:
         playbackLevel = 0
         state = .idle
         failureMessage = nil
+        isHoldingConversationTurn = false
+        isPlayingBackchannel = false
         if clearVisibleText {
             visibleText = ""
         }
@@ -706,44 +852,12 @@ final class GIAResponseCoordinator:
         phraseCache.removeAll(keepingCapacity: false)
     }
 
-    private func warmupCommonPhrases() async {
-        guard
-            allowsCannedReplyFallback,
-            let speechGenerator
-        else {
-            return
-        }
-        for phrase in [
-            GIAResponsePhrase.greetingTrip,
-            .greetingDestination,
-            .greetingPlan,
-            .stillListening,
-            .followUpPrompt,
-            .goodbye
-        ] {
-            guard phraseCache[phrase] == nil else { continue }
-            let text = GIAConversationFallback.response(
-                for: phrase
-            ).spokenText
-            if
-                let speech = await generatedSpeech(
-                    from: speechGenerator,
-                    text: text
-                )
-            {
-                phraseCache[phrase] = speech
-            }
-        }
-    }
-
     func cancelPendingResponse(
         message: String =
             "G.I.A. voice is taking too long. The response is shown."
     ) {
         guard state == .generating else { return }
         generation &+= 1
-        pendingRestSpeechTask?.cancel()
-        pendingRestSpeechTask = nil
         audioPlayer?.stop()
         audioPlayer = nil
         localSpeechGeneration = nil
@@ -995,6 +1109,8 @@ final class GIAResponseCoordinator:
         utterance.pitchMultiplier = 1.02
         utterance.volume = 1
         utterance.preUtteranceDelay = 0.04
+        clearsVisibleTextOnFinish = false
+        speechPlaybackSource = .systemFallback
         state = .playing
         localSpeechGeneration = currentGeneration
         startLocalSpeechMetering(generation: currentGeneration)
@@ -1070,17 +1186,41 @@ final class GIAResponseCoordinator:
             failureMessage = nil
             if clearsVisibleTextOnFinish {
                 visibleText = ""
-                state = .idle
-                preservesListening = false
             }
+            if isHoldingConversationTurn {
+                state = .generating
+                playbackContinuation?.resume(returning: success)
+                playbackContinuation = nil
+                return
+            }
+            // Conversational prompts stay visible while the microphone is
+            // re-armed, but playback must leave PLAYING and release the
+            // audio session so request capture can start.
+            state = .idle
+            preservesListening = false
+            deactivateAudioSession()
         } else {
             state = .failed
             failureMessage =
                 "G.I.A. voice could not finish. The response is shown."
         }
+        clearsVisibleTextOnFinish = true
         playbackContinuation?.resume(returning: success)
         playbackContinuation = nil
     }
+
+    #if DEBUG
+    func simulateSuccessfulPlaybackCompletionForTesting(
+        visibleText text: String,
+        clearsVisibleText: Bool
+    ) {
+        stop()
+        visibleText = text
+        state = .playing
+        clearsVisibleTextOnFinish = clearsVisibleText
+        finishPlayback(success: true)
+    }
+    #endif
 
     private func publishFailure(_ message: String) {
         state = .failed

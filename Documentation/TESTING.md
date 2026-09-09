@@ -1,5 +1,19 @@
 # G.I.A. Phase 1 Test Record
 
+## Conversation Regression Suite
+
+The shared `GIA` scheme includes the `GIAUnitTests` target. Run Product > Test
+in Xcode, or use `xcodebuild test` with an iPhone Simulator destination. The
+suite uses local mocks and bundled demo fixtures only; it never calls a live
+provider or performs a real booking.
+
+Coverage includes missing information, multi-part answers, answer changes,
+repeated questions, date phrasing, budgets, group sizes, provider failure,
+empty results, itinerary assembly, simulated booking confirmation, and the
+spoken-question transition back to active recognition. See
+`Documentation/BUG_LOG_2026-09-08.md` for failure modes and remaining physical-
+device checks.
+
 ## Supported Environment
 
 - Device family: iPhone
@@ -832,4 +846,3 @@ Record the following after implementation:
 - Commit:
 - Result:
 - Remaining issues:
-

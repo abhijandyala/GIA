@@ -14,7 +14,14 @@ enum AssistantPresentationStateVerificationMain {
             resolve(.transcribing, .idle) == .listening
         )
         precondition(
-            resolve(.validating, .idle) == .listening
+            resolve(.validating, .idle) == .processing
+        )
+        precondition(
+            GIAAssistantPresentationState.resolve(
+                phase: .validating,
+                responseState: .idle,
+                discVisible: true
+            ) == .listening
         )
         precondition(
             resolve(.needsClarification, .generating)
