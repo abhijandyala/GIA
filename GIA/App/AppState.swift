@@ -9,6 +9,7 @@ final class AppState {
     private(set) var applicationActivity: ApplicationActivity = .active
     private(set) var assistantReplyMode: GIATypedReplyMode?
     private(set) var pendingMapFollowUp = false
+    private(set) var hostWakeSequence = 0
 
     init() {
         #if DEBUG
@@ -46,6 +47,23 @@ final class AppState {
 
     func requestMapFollowUp() {
         pendingMapFollowUp = true
+    }
+
+    @discardableResult
+    func consumeHostWakeURL(_ url: URL) -> Bool {
+        guard Self.isHostWakeURL(url) else { return false }
+        select(.map)
+        hostWakeSequence &+= 1
+        return true
+    }
+
+    static func isHostWakeURL(_ url: URL) -> Bool {
+        guard url.scheme?.lowercased() == "gia" else { return false }
+        let host = url.host?.lowercased() ?? ""
+        let path = url.path.lowercased().trimmingCharacters(
+            in: CharacterSet(charactersIn: "/")
+        )
+        return host == "wake" || path == "wake"
     }
 
     func consumePendingMapFollowUp() -> Bool {

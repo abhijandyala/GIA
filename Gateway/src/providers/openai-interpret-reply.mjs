@@ -326,7 +326,7 @@ async function callOpenAI({
         model,
         store: false,
         reasoning: {
-          effort: "minimal"
+          effort: "none"
         },
         instructions: INSTRUCTIONS,
         input: JSON.stringify(input),

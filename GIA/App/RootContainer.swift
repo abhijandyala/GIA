@@ -40,6 +40,11 @@ struct RootContainer: View {
         .environment(planningOrchestrator)
         .environment(planTranslationCoordinator)
         .environment(connectivityMonitor)
+        .onOpenURL { url in
+            #if targetEnvironment(simulator)
+            _ = appState.consumeHostWakeURL(url)
+            #endif
+        }
         .onChange(of: scenePhase, initial: true) { _, newPhase in
             appState.updateApplicationActivity(
                 applicationActivity(for: newPhase)

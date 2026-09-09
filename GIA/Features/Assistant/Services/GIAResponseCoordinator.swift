@@ -241,6 +241,8 @@ final class GIAResponseCoordinator:
     @ObservationIgnored
     private let allowsSystemVoiceFallback: Bool
     @ObservationIgnored
+    private let allowsCannedReplyFallback: Bool
+    @ObservationIgnored
     private var audioPlayer: AVAudioPlayer?
     @ObservationIgnored
     private let speechSynthesizer = AVSpeechSynthesizer()
@@ -273,7 +275,9 @@ final class GIAResponseCoordinator:
         self.init(
             speechGenerator: speechGenerator,
             responseGenerator: service,
-            replyInterpreter: service
+            replyInterpreter: service,
+            allowsSystemVoiceFallback: false,
+            allowsCannedReplyFallback: false
         )
         #else
         self.init(
@@ -288,12 +292,14 @@ final class GIAResponseCoordinator:
         speechGenerator: (any SpeechGenerating)?,
         responseGenerator: (any AssistantResponding)? = nil,
         replyInterpreter: (any TripReplyInterpreting)? = nil,
-        allowsSystemVoiceFallback: Bool = true
+        allowsSystemVoiceFallback: Bool = true,
+        allowsCannedReplyFallback: Bool = true
     ) {
         self.speechGenerator = speechGenerator
         self.responseGenerator = responseGenerator
         self.replyInterpreter = replyInterpreter
         self.allowsSystemVoiceFallback = allowsSystemVoiceFallback
+        self.allowsCannedReplyFallback = allowsCannedReplyFallback
         super.init()
         speechSynthesizer.delegate = self
         Task { @MainActor [weak self] in
@@ -385,16 +391,42 @@ final class GIAResponseCoordinator:
 
         var response = fallbackResponse
         if let responseGenerator {
-            if
-                let generated = await generatedResponse(
-                    from: responseGenerator,
-                    context: context
-                ),
-                Self.isValid(generated, for: context)
-            {
+            switch await generatedResponse(
+                from: responseGenerator,
+                context: context
+            ) {
+            case .success(let generated)
+                where Self.isValid(generated, for: context):
                 response = generated
                 usedFallbackResponse = false
+            case .success:
+                if allowsCannedReplyFallback {
+                    break
+                }
+                publishFailure(
+                    "Assistant reply was rejected. Check the gateway log."
+                )
+                return nil
+            case .failure(let message):
+                if allowsCannedReplyFallback {
+                    break
+                }
+                publishFailure(message)
+                return nil
+            case nil:
+                if allowsCannedReplyFallback {
+                    break
+                }
+                publishFailure(
+                    "Assistant reply timed out. Check the gateway."
+                )
+                return nil
             }
+        } else if !allowsCannedReplyFallback {
+            publishFailure(
+                "Assistant replies are disabled in this build."
+            )
+            return nil
         }
         guard
             generation == currentGeneration,
@@ -675,7 +707,12 @@ final class GIAResponseCoordinator:
     }
 
     private func warmupCommonPhrases() async {
-        guard let speechGenerator else { return }
+        guard
+            allowsCannedReplyFallback,
+            let speechGenerator
+        else {
+            return
+        }
         for phrase in [
             GIAResponsePhrase.greetingTrip,
             .greetingDestination,
@@ -765,20 +802,56 @@ final class GIAResponseCoordinator:
                 )
     }
 
+    private enum LiveReplyOutcome: Sendable {
+        case success(GIAConversationResponse)
+        case failure(String)
+    }
+
     private func generatedResponse(
         from generator: any AssistantResponding,
         context: GIAConversationContext
-    ) async -> GIAConversationResponse? {
+    ) async -> LiveReplyOutcome? {
         await firstResult(
             timeoutNanoseconds: 8_000_000_000
         ) {
             if Task.isCancelled {
                 return nil
             }
-            return
-                try? await generator.generateResponse(
+            do {
+                let response = try await generator.generateResponse(
                     matching: context
                 )
+                return .success(response)
+            } catch let error as GatewayClientError {
+                return .failure(Self.message(for: error))
+            } catch {
+                return .failure(error.localizedDescription)
+            }
+        }
+    }
+
+    nonisolated private static func message(
+        for error: GatewayClientError
+    ) -> String {
+        switch error {
+        case .providerUnavailable(let code, let message):
+            "\(code). \(message)"
+        case .timedOut:
+            "Assistant reply timed out."
+        case .transportFailure:
+            "Could not reach the G.I.A. gateway."
+        case .unauthorized, .forbidden:
+            "Gateway authorization failed."
+        case .rateLimited:
+            "The assistant is busy. Try again shortly."
+        case .serverFailure:
+            "The gateway returned a server failure."
+        case .decodingFailed:
+            "The assistant reply could not be read."
+        case .cancelled:
+            "Assistant reply was cancelled."
+        case .invalidBaseURL, .invalidResponse, .encodingFailed:
+            "Assistant reply failed."
         }
     }
 
@@ -787,7 +860,7 @@ final class GIAResponseCoordinator:
         text: String
     ) async -> GeneratedSpeech? {
         await firstResult(
-            timeoutNanoseconds: 2_500_000_000
+            timeoutNanoseconds: 8_000_000_000
         ) {
             if Task.isCancelled {
                 return nil

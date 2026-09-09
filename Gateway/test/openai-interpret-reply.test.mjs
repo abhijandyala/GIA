@@ -119,7 +119,7 @@ test("OpenAI interpreter requests strict structured output", async () => {
   );
 });
 
-test("interpreter defaults to gpt-5.4-mini with minimal reasoning", async () => {
+test("interpreter defaults to gpt-5.4-mini with none reasoning", async () => {
   let capturedBody;
   const interpret = createOpenAIReplyInterpreter({
     apiKey: "server-key",
@@ -150,5 +150,5 @@ test("interpreter defaults to gpt-5.4-mini with minimal reasoning", async () => 
   });
 
   assert.equal(capturedBody.model, "gpt-5.4-mini");
-  assert.equal(capturedBody.reasoning.effort, "minimal");
+  assert.equal(capturedBody.reasoning.effort, "none");
 });

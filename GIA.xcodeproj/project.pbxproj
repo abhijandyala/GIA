@@ -886,6 +886,7 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = GIA/App/GIAInfo.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "G.I.A.";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.travel";
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "G.I.A. adds selected itinerary items to your calendar only when you choose Export Plan.";
@@ -923,6 +924,7 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = GIA/App/GIAInfo.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "G.I.A.";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.travel";
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "G.I.A. adds selected itinerary items to your calendar only when you choose Export Plan.";

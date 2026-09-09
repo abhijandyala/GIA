@@ -453,7 +453,7 @@ async function callOpenAI({
         model,
         store: false,
         reasoning: {
-          effort: "minimal"
+          effort: "none"
         },
         instructions: INSTRUCTIONS,
         input: JSON.stringify(input),
@@ -484,6 +484,11 @@ async function callOpenAI({
     );
   }
   if (!response.ok) {
+    const errorText = await response.text().catch(() => "");
+    console.error(
+      `OpenAI conversation HTTP ${response.status}: `
+      + errorText.slice(0, 1200)
+    );
     if (response.status === 429) {
       throw new GatewayError(
         429,
@@ -579,6 +584,10 @@ async function consumeOpenAIStream(
           payload.type === "response.failed"
           || payload.type === "error"
         ) {
+          console.error(
+            "OpenAI conversation stream error: "
+            + JSON.stringify(payload).slice(0, 1200)
+          );
           throw new GatewayError(
             502,
             "assistant_response_failed",

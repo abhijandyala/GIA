@@ -55,13 +55,14 @@ struct EarthSceneView: UIViewRepresentable {
     }
 
     private func updateRenderingState(of sceneView: SCNView) {
-        let shouldRender = isActive && isGlobeVisible
         controller.setGlobeVisible(isGlobeVisible)
-        controller.setRotationEnabled(shouldRender && isAnimating)
-        sceneView.isHidden = !isGlobeVisible
-        sceneView.alpha = isGlobeVisible ? 1 : 0
-        sceneView.rendersContinuously = shouldRender
-        sceneView.isPlaying = shouldRender
+        controller.setRotationEnabled(
+            isActive && isAnimating && isGlobeVisible
+        )
+        sceneView.isHidden = false
+        sceneView.alpha = 1
+        sceneView.rendersContinuously = isActive
+        sceneView.isPlaying = isActive
         sceneView.setNeedsDisplay()
     }
 }

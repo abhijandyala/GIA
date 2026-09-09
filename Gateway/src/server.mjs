@@ -60,12 +60,14 @@ const serializeSerpApi = (handler) => (
 const speechCache = createSpeechPrefetchCache();
 const generateSpeech = createElevenLabsSpeech({
   apiKey: gatewayEnvironment.ELEVENLABS_API_KEY,
-  voiceIdentifier:
-    gatewayEnvironment.ELEVENLABS_VOICE_ID
-    ?? "3Drdg7QWqr45nZmYpXRP",
-  modelIdentifier:
-    gatewayEnvironment.ELEVENLABS_MODEL_ID
-    ?? "eleven_flash_v2_5"
+  voiceIdentifier: configuredOrDefault(
+    gatewayEnvironment.ELEVENLABS_VOICE_ID,
+    "3Drdg7QWqr45nZmYpXRP"
+  ),
+  modelIdentifier: configuredOrDefault(
+    gatewayEnvironment.ELEVENLABS_MODEL_ID,
+    "eleven_flash_v2_5"
+  )
 });
 
 function prefetchConversationSpeech(text) {
@@ -245,4 +247,12 @@ function readPort(value) {
     throw new Error("PORT must be between 1 and 65535.");
   }
   return parsed;
+}
+
+function configuredOrDefault(value, fallback) {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : fallback;
 }

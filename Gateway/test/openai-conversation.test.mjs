@@ -140,7 +140,7 @@ test("OpenAI responder requests strict non-stored structured output", async () =
   );
 });
 
-test("conversation defaults to gpt-5.4-mini with minimal reasoning", async () => {
+test("conversation defaults to gpt-5.4-mini with none reasoning", async () => {
   let capturedBody;
   const responder = createOpenAIConversationResponder({
     apiKey: "server-key",
@@ -163,7 +163,7 @@ test("conversation defaults to gpt-5.4-mini with minimal reasoning", async () =>
   });
 
   assert.equal(capturedBody.model, "gpt-5.4-mini");
-  assert.equal(capturedBody.reasoning.effort, "minimal");
+  assert.equal(capturedBody.reasoning.effort, "none");
 });
 
 test("missing OpenAI configuration fails closed", async () => {
